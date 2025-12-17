@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Taxímetro Pro - Precision</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold: #FFD700;
+            --glass-bg: rgba(15, 15, 15, 0.95);
+            --danger: #ff4444;
+            --success: #25D366;
+            --warning: #ff9900;
+        }
+
+        html, body {
+            margin: 0; padding: 0;
+            background-color: #000;
+            font-family: 'Montserrat', sans-serif;
+            width: 100%; height: 100dvh;
+            overflow: hidden; position: fixed;
+            display: flex; flex-direction: column;
+        }
+
+        /* --- HEADER --- */
+        .premium-header {
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: max(15px, env(safe-area-inset-top)) 20px 15px 20px;
+            box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            z-index: 20; pointer-events: none;
+        }
+
+        .info-left {
+            pointer-events: auto;
+            background: var(--glass-bg); padding: 10px 15px;
+            border-radius: 12px; border-left: 3px solid var(--gold);
+            color: white; backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .driver-id-tag { font-size: 0.7rem; color: var(--gold); font-weight: bold; margin-bottom: 2px; }
+        .gps-status { font-size: 0.65rem; color: var(--success); display: flex; align-items: center; gap: 4px; margin-top: 2px;}
+        .gps-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; animation: pulse 2s infinite; }
+        
+        .fare-panel {
+            pointer-events: auto;
+            background: var(--glass-bg); padding: 15px 20px;
+            border-radius: 15px; text-align: right;
+            border-right: 3px solid var(--gold);
+            backdrop-filter: blur(10px); min-width: 120px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .fare-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; }
+        .fare-value {
+            font-family: 'Orbitron', sans-serif; font-size: 2rem;
+            font-weight: 700; color: var(--gold);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); margin: 5px 0;
+        }
+        .mini-stats { font-size: 0.7rem; color: #ddd; font-family: 'Orbitron'; }
+
+        /* --- MAPA --- */
+        #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #000; }
+
+        /* --- BOTÕES LATERAIS --- */
+        .side-buttons {
+            position: absolute; 
+            bottom: max(120px, env(safe-area-inset-bottom) + 100px);
+            right: 15px;
+            display: flex; flex-direction: column; gap: 10px;
+            z-index: 10;
+        }
+
+        .icon-btn {
+            width: 45px; height: 45px;
+            background: var(--glass-bg); border: 1px solid var(--gold);
+            border-radius: 50%; color: var(--gold);
+            font-size: 1.2rem; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; backdrop-filter: blur(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+        .icon-btn:active { transform: scale(0.9); }
+        .map-layer-btn { border-color: #fff; color: #fff; }
+
+        /* --- BOTÃO INICIAR --- */
+        .bottom-action-container {
+            position: absolute; 
+            bottom: max(30px, env(safe-area-inset-bottom));
+            left: 0; width: 100%;
+            display: flex; justify-content: center; z-index: 20; pointer-events: none;
+        }
+        .btn-premium {
+            pointer-events: auto;
+            background: linear-gradient(135deg, #FFD700, #FDB931);
+            color: #000; border: none; padding: 18px 50px;
+            border-radius: 50px; font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem; font-weight: 800; text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-premium.stop {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white; box-shadow: 0 0 20px rgba(255, 68, 68, 0.4);
+        }
+
+        /* --- MODAIS --- */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 100;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px); padding: 20px; box-sizing: border-box;
+        }
+        .overlay.active { display: flex; }
+
+        .modal-box {
+            background: #1a1a1a; border: 1px solid var(--gold);
+            padding: 25px; border-radius: 15px; width: 100%; max-width: 350px;
+            color: white; text-align: center; position: relative; max-height: 80dvh; overflow-y: auto;
+        }
+        .input-dark {
+            width: 100%; padding: 12px; margin: 8px 0;
+            background: #333; border: 1px solid #444; border-radius: 8px;
+            color: white; text-align: center; font-size: 1rem; box-sizing: border-box;
+        }
+        .btn-full {
+            width: 100%; padding: 15px; margin-top: 15px;
+            background: var(--gold); border: none; border-radius: 8px;
+            font-weight: 800; font-size: 1rem; cursor: pointer; color: black;
+        }
+
+        /* Tabelas e Chat */
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
+        .admin-table th { text-align: left; color: var(--gold); border-bottom: 1px solid #555; padding: 5px; }
+        .admin-table td { text-align: left; padding: 8px 5px; border-bottom: 1px solid #333; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        
+        .receipt-total strong { font-size: 2.2rem; color: var(--gold); display: block; font-family: 'Orbitron'; }
+        
+        .chat-area {
+            height: 250px; background: #222; border-radius: 10px; margin-bottom: 10px;
+            display: flex; flex-direction: column; text-align: left; overflow: hidden;
+        }
+        .chat-messages { flex-grow: 1; padding: 10px; overflow-y: auto; font-size: 0.9rem; color: #ccc; }
+        .chat-input-area { display: flex; border-top: 1px solid #444; }
+        .chat-input-area input { flex-grow: 1; background: #111; border: none; padding: 15px; color: white; }
+
+        .car-icon-container {
+            width: 60px; height: 60px; display: flex; justify-content: center; align-items: center;
+            margin-top: -30px; margin-left: -30px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.9));
+        }
+        .moving .car-wheel { animation: spin 0.5s linear infinite; transform-box: fill-box; transform-origin: center; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="premium-header">
+        <div class="info-left">
+            <div class="driver-id-tag" id="displayDriverId">MOT. ---</div>
+            <div class="gps-status" id="gpsStatus"><div class="gps-dot"></div> <span id="gpsText">Buscando...</span></div>
+        </div>
+        <div class="fare-panel">
+            <div class="fare-label" id="fareLabel">Status</div>
+            <div class="fare-value" id="totalPrice">R$ 0,00</div>
+            <div class="mini-stats">
+                <span id="distDisplay">0.0 km</span> • <span id="timeDisplay">00:00</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="side-buttons">
+        <div class="icon-btn map-layer-btn" onclick="toggleMapLayer()">🌍</div> <div class="icon-btn" onclick="openSearch()">🔍</div>
+        <div class="icon-btn" onclick="openChat()">💬</div>
+        <div class="icon-btn" onclick="openSettings()">⚙️</div>
+        <div class="icon-btn admin-btn" onclick="openAdmin()">🛡️</div>
+        <div class="icon-btn" onclick="centerMapOnUser()">⌖</div>
+    </div>
+
+    <div class="bottom-action-container">
+        <button class="btn-premium" id="actionBtn" onclick="toggleRide()">INICIAR CORRIDA</button>
+    </div>
+
+    <div id="registerModal" class="overlay">
+        <div class="modal-box">
+            <h2 style="color:var(--gold); margin:0;">BEM-VINDO</h2>
+            <p style="color:#888;">Configure seu perfil</p>
+            <input type="text" id="regName" class="input-dark" placeholder="Nome">
+            <input type="text" id="regPonto" class="input-dark" placeholder="Ponto">
+            <button class="btn-full" onclick="registerDriver()">SALVAR</button>
+        </div>
+    </div>
+
+    <div id="receiptModal" class="overlay">
+        <div class="modal-box">
+            <h2 style="margin:0; color:white;">FINALIZADO</h2>
+            <div class="receipt-total" style="background:#222; margin:20px 0; padding:20px;"><strong id="recTotal">R$ 0,00</strong></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div><span style="color:#888">DISTÂNCIA</span><br><strong style="color:white" id="recDist">0 km</strong></div>
+                <div><span style="color:#888">TEMPO</span><br><strong style="color:white" id="recTime">00:00</strong></div>
+            </div>
+            <button class="btn-full" style="background:var(--success); color:white;" onclick="shareRide()">COMPARTILHAR 📲</button>
+            <button class="btn-full" style="background:#333; color:white;" onclick="closeReceipt()">FECHAR</button>
+        </div>
+    </div>
+
+    <div id="chatModal" class="overlay">
+        <div class="modal-box" style="text-align:left;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <h3 style="margin:0; color:var(--gold);">RADIO TAXI</h3>
+                <span style="cursor:pointer; font-size:1.2rem;" onclick="closeChat()">✖</span>
+            </div>
+            <div class="chat-area">
+                <div class="chat-messages" id="chatMessages">
+                    <div style="text-align:center; color:#555; margin-top:20px;"><i>Frequência Aberta...</i></div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Mensagem...">
+                    <button onclick="sendMsg()" style="background:var(--gold); border:none; font-weight:bold; padding: 0 20px;">></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="searchModal" class="overlay">
+        <div class="modal-box">
+            <h3 style="color:var(--gold); margin-top:0;">COPILOTO</h3>
+            <p style="color:#aaa; font-size:0.9rem;">Digite o destino</p>
+            <input type="text" id="searchInput" class="input-dark" placeholder="Ex: Matriz SJDR">
+            <button class="btn-full" onclick="performSearch()">PESQUISAR</button>
+            <button class="btn-full" style="background:#333; color:white; margin-top:10px;" onclick="closeSearch()">CANCELAR</button>
+        </div>
+    </div>
+
+    <div id="settingsOverlay" class="overlay">
+        <div class="modal-box">
+            <h3 style="color:var(--gold);">TARIFAS</h3>
+            <label style="color:#888; display:block; text-align:left; font-size:0.8rem;">Bandeirada (R$)</label>
+            <input type="number" id="basePrice" class="input-dark" value="5.00">
+            <label style="color:#888; display:block; text-align:left; font-size:0.8rem;">Preço KM (R$)</label>
+            <input type="number" id="kmPrice" class="input-dark" value="2.50">
+            <label style="color:#888; display:block; text-align:left; font-size:0.8rem;">Preço Hora (R$)</label>
+            <input type="number" id="hourPrice" class="input-dark" value="24.00">
+            <button class="btn-full" onclick="closeSettings()">SALVAR</button>
+            <button class="btn-full" style="background:#333; margin-top:5px;" onclick="closeSettings()">CANCELAR</button>
+        </div>
+    </div>
+
+    <div id="adminModal" class="overlay">
+        <div class="modal-box">
+            <h3 style="color:#ff4444; margin-top:0;">ADMINISTRATIVO</h3>
+            <div id="adminLogin">
+                <input type="password" id="adminPass" class="input-dark" placeholder="Senha">
+                <button class="btn-full" style="background:#ff4444; color:white;" onclick="checkAdmin()">ENTRAR</button>
+                <button class="btn-full" style="background:#333;" onclick="closeAdmin()">VOLTAR</button>
+            </div>
+            <div id="adminPanel" style="display:none;">
+                <table class="admin-table">
+                    <thead><tr><th>ID</th><th>NOME</th><th>PONTO</th><th>ST</th></tr></thead>
+                    <tbody id="driverTableBody"></tbody>
+                </table>
+                <div style="margin-top:20px; text-align:left; font-size:0.7rem; color:#666;">*Versão: 2.0 Precision</div>
+                <button class="btn-full" style="background:#333;" onclick="closeAdmin()">SAIR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- MOTORISTA ---
+        let driverInfo = { name: '', ponto: '', id: '000' };
+        function initApp() {
+            const data = localStorage.getItem('sjdr_taxi_driver');
+            if (data) { driverInfo = JSON.parse(data); updateDriverDisplay(); } 
+            else { document.getElementById('registerModal').classList.add('active'); }
+        }
+        function registerDriver() {
+            const name = document.getElementById('regName').value;
+            const ponto = document.getElementById('regPonto').value;
+            if(!name) return alert("Nome obrigatório");
+            driverInfo = { name, ponto, id: Math.floor(Math.random()*900)+100 };
+            localStorage.setItem('sjdr_taxi_driver', JSON.stringify(driverInfo));
+            document.getElementById('registerModal').classList.remove('active');
+            updateDriverDisplay();
+        }
+        function updateDriverDisplay() { document.getElementById('displayDriverId').innerText = `MOT. #${driverInfo.id} | ${driverInfo.name}`; }
+
+        // --- MAPA E CAMADAS ---
+        let map, carMarker, polyline, destMarker;
+        let streetLayer, satLayer;
+        let isSatellite = false;
+
+        function initMap() {
+            map = L.map('map', {zoomControl: false}).setView([-21.135, -44.261], 15);
+            
+            // Camada Rua (Clean
