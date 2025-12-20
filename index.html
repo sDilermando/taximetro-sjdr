@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Taxímetro Enterprise Final</title>
+    <title>Taxímetro V11</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     
@@ -17,182 +17,171 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        :root {
-            --bg: #0f172a; --card: #1e293b; --primary: #22c55e;
-            --danger: #ef4444; --accent: #3b82f6; --gold: #eab308;
-            --text: #f8fafc; --disabled: #475569;
-        }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #22c55e; --accent: #3b82f6; --gold: #eab308; --text: #f8fafc; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; flex-direction: column; overflow: hidden; }
+        body { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; flex-direction: column; overflow: hidden; }
 
         /* HEADER */
-        .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid #334155; z-index: 10; }
-        .brand { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; }
+        .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid #334155; z-index: 50; }
+        .brand { font-weight: 800; font-size: 1.1rem; }
         .brand span { color: var(--primary); }
-        .header-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
-        .clock { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 0.9rem; font-weight: bold; margin-bottom: 2px; }
-        .driver-info { font-size: 0.65rem; color: #94a3b8; }
-        .driver-name { color: var(--gold); font-weight: bold; text-transform: uppercase; }
+        .header-info { text-align: right; font-size: 0.7rem; color: #94a3b8; }
+        .clock { color: var(--accent); font-weight: bold; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
 
         /* PAINEL */
-        .main-display { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 70%); position: relative; }
-        .price-label { font-size: 0.8rem; color: #64748b; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
-        .price-value { font-family: 'JetBrains Mono', monospace; font-size: 4rem; font-weight: 700; color: var(--primary); text-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        .main { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #1e293b 0%, #0f172a 80%); }
+        .price-lbl { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: #64748b; margin-bottom: 5px; }
+        .price-val { font-family: 'JetBrains Mono', monospace; font-size: 4.2rem; font-weight: 700; color: var(--primary); text-shadow: 0 0 25px rgba(34, 197, 94, 0.2); }
         
-        /* SELETOR DE BANDEIRA */
-        .flag-selector { display: flex; gap: 10px; margin-top: 15px; background: #334155; padding: 5px; border-radius: 30px; }
-        .flag-btn { padding: 8px 20px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; cursor: pointer; border: none; color: #94a3b8; background: transparent; transition: 0.2s; }
-        .flag-btn.active { background: var(--primary); color: #000; box-shadow: 0 2px 10px rgba(34,197,94,0.3); }
-        .flag-btn.active-2 { background: var(--gold); color: #000; box-shadow: 0 2px 10px rgba(234,179,8,0.3); }
-        .flag-btn.locked { opacity: 0.5; cursor: not-allowed; pointer-events: none; } 
+        /* BANDEIRAS */
+        .flags { display: flex; gap: 10px; margin-top: 15px; background: #334155; padding: 5px; border-radius: 30px; }
+        .flag-btn { padding: 8px 25px; border-radius: 20px; border: none; background: transparent; color: #94a3b8; font-weight: bold; font-size: 0.75rem; cursor: pointer; }
+        .flag-btn.active { background: var(--primary); color: #000; }
+        .flag-btn.active-2 { background: var(--gold); color: #000; }
+        .flag-lock { font-size: 0.6rem; color: var(--gold); margin-top: 5px; display: none; }
 
-        /* INFO GRID */
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; padding: 0 30px; margin-top: 25px; }
-        .info-item { text-align: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; }
-        .info-val { font-size: 1.2rem; font-weight: 700; color: white; }
-        .info-lbl { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; }
+        /* INFO */
+        .info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; padding: 0 30px; margin-top: 30px; }
+        .info-box { text-align: center; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; }
+        .info-num { font-size: 1.3rem; font-weight: bold; }
+        .info-txt { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; margin-top: 2px; }
 
-        /* CONTROLES */
-        .controls { padding: 0 20px 20px 20px; display: flex; flex-direction: column; gap: 10px; }
-        .btn-big { width: 100%; padding: 18px; border: none; border-radius: 14px; font-size: 1rem; font-weight: 800; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; transition: transform 0.1s; }
-        .btn-big:active { transform: scale(0.98); }
-        .btn-start { background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); }
-        .btn-stop { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
-        .btn-pause { background: #334155; flex: 0 0 60px; }
+        /* BOTÕES */
+        .controls { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-size: 1rem; font-weight: 800; text-transform: uppercase; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn:active { transform: scale(0.98); }
+        .btn-green { background: linear-gradient(135deg, #22c55e, #15803d); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); }
+        .btn-red { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+        .btn-gray { background: #334155; color: #cbd5e1; }
 
-        /* DOCK */
-        .dock { background: #0f172a; padding: 10px 10px 20px 10px; border-top: 1px solid #334155; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-        .dock-btn { background: transparent; border: none; color: #64748b; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.6rem; font-weight: 600; padding: 8px 0; cursor: pointer; }
-        .dock-btn svg { width: 22px; height: 22px; margin-bottom: 2px; }
-        .dock-btn:active { color: var(--primary); }
+        /* MENU INFERIOR */
+        .dock { background: #0f172a; border-top: 1px solid #334155; padding: 10px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+        .dock-item { background: transparent; border: none; color: #64748b; display: flex; flex-direction: column; align-items: center; font-size: 0.6rem; font-weight: 600; padding: 5px 0; cursor: pointer; }
+        .dock-item svg { width: 24px; height: 24px; margin-bottom: 3px; }
+        .dock-item:active { color: var(--primary); }
 
         /* MODAIS */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: none; align-items: flex-end; }
-        .modal-content { width: 100%; background: #1e293b; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; max-height: 95vh; overflow-y: auto; display: flex; flex-direction: column; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .modal-title { font-size: 1.1rem; font-weight: bold; color: white; }
-        .close-btn { background: none; border: none; color: #94a3b8; font-size: 1.5rem; }
-        .input-dark { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; margin-bottom: 10px; }
-        
-        /* SEARCH BOX NO MAPA */
-        .leaflet-control-geocoder { background: white; border-radius: 5px; font-family: 'Inter', sans-serif; }
-        .leaflet-control-geocoder-icon { width: 30px; height: 30px; }
+        .modal-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: none; align-items: flex-end; }
+        .modal-box { width: 100%; background: #1e293b; border-radius: 20px 20px 0 0; padding: 20px; max-height: 95vh; display: flex; flex-direction: column; overflow-y: auto; }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .modal-title { font-size: 1.2rem; font-weight: bold; color: white; }
+        .close { background: none; border: none; color: #94a3b8; font-size: 2rem; line-height: 1; }
 
-        /* CONFIG GRID */
-        .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .config-item label { font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 5px; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .input-field { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; margin-bottom: 10px; }
+        .input-label { font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 4px; }
 
-        svg { width: 24px; height: 24px; fill: currentColor; }
+        /* LEAFLET CUSTOM */
+        .leaflet-control-geocoder { width: 100%; max-width: 300px; }
+        .leaflet-control-geocoder-form input { color: black; width: 100%; }
+
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="brand">TAXI<span>METER</span></div>
-        <div class="header-right">
-            <div class="clock" id="liveClock">00:00:00</div>
-            <div class="driver-info">Mot: <span class="driver-name" id="headerDriverName">...</span> | <span id="headerId">...</span></div>
+        <div class="brand">TAXI<span>PRO</span></div>
+        <div class="header-info">
+            <div class="clock" id="clock">00:00:00</div>
+            <div id="driverName">...</div>
         </div>
     </div>
 
-    <div class="main-display">
-        <div class="price-label">Valor Total</div>
-        <div class="price-value" id="displayPrice">R$ 0,00</div>
+    <div class="main">
+        <div class="price-lbl">VALOR A PAGAR</div>
+        <div class="price-val" id="displayVal">R$ 0,00</div>
 
-        <div class="flag-selector">
-            <button class="flag-btn active" id="btnFlag1" onclick="setManualFlag(1)">BANDEIRA 1</button>
-            <button class="flag-btn" id="btnFlag2" onclick="setManualFlag(2)">BANDEIRA 2</button>
+        <div class="flags">
+            <button class="flag-btn active" id="btnB1" onclick="mudarBandeira(1)">BANDEIRA 1</button>
+            <button class="flag-btn" id="btnB2" onclick="mudarBandeira(2)">BANDEIRA 2</button>
         </div>
-        <div id="flagLockMsg" style="font-size:0.6rem; color:#eab308; margin-top:5px; display:none;">🔒 BLOQUEIO AUTOMÁTICO ATIVO</div>
+        <div class="flag-lock" id="flagLock">🔒 HORÁRIO AUTOMÁTICO ATIVO</div>
 
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-val" id="displayDist">0.0</div>
-                <div class="info-lbl">KM (Cobrado > 1.5)</div>
+        <div class="info-row">
+            <div class="info-box">
+                <div class="info-num" id="displayKm">0.0</div>
+                <div class="info-txt">KM (Cobrado > 1.5)</div>
             </div>
-            <div class="info-item">
-                <div class="info-val" id="displayTime">00:00</div>
-                <div class="info-lbl">TEMPO TOTAL</div>
+            <div class="info-box">
+                <div class="info-num" id="displayTempo">00:00</div>
+                <div class="info-txt">TEMPO CORRIDO</div>
             </div>
         </div>
     </div>
 
     <div class="controls">
-        <div id="startRow">
-            <button class="btn-big btn-start" onclick="startRace()">
-                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> INICIAR CORRIDA
+        <div id="btnStartBox">
+            <button class="btn btn-green" onclick="iniciarCorrida()">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg> INICIAR CORRIDA
             </button>
         </div>
-        <div id="runningRow" style="display:none; gap:10px;">
-            <button class="btn-big btn-pause" onclick="togglePause()" id="btnPause">
-                <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        <div id="btnRunBox" style="display:none; gap:10px; display: flex;">
+            <button class="btn btn-gray" onclick="pausarCorrida()" id="btnPausa" style="flex:1">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             </button>
-            <button class="btn-big btn-stop" onclick="finishRace()">
-                <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg> ENCERRAR
+            <button class="btn btn-red" onclick="encerrarCorrida()" style="flex:3">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M6 6h12v12H6z"/></svg> ENCERRAR
             </button>
         </div>
     </div>
 
     <div class="dock">
-        <div class="dock-btn" onclick="openSimulator()">
-            <svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg> Simular
-        </div>
-        <div class="dock-btn" onclick="showHistory()">
-            <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg> Histórico
-        </div>
-        <div class="dock-btn" onclick="shareApp()">
-            <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg> App
-        </div>
-        <div class="dock-btn" onclick="openSettingsModal()">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg> Ajustes
-        </div>
-        <div class="dock-btn" onclick="openAdmin()">
-            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg> Admin
-        </div>
+        <button class="dock-item" onclick="abrirSimulador()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg> Simular
+        </button>
+        <button class="dock-item" onclick="abrirHistorico()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg> Histórico
+        </button>
+        <button class="dock-item" onclick="compartilharApp()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg> Share
+        </button>
+        <button class="dock-item" onclick="abrirConfiguracoes()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg> Ajustes
+        </button>
+        <button class="dock-item" onclick="abrirAdmin()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg> Admin
+        </button>
     </div>
 
-    <div id="modalSimulator" class="modal-overlay">
-        <div class="modal-content" style="height:90vh;">
-            <div class="modal-header">
+    <div id="mdlSim" class="modal-bg">
+        <div class="modal-box" style="height:90vh;">
+            <div class="modal-head">
                 <span class="modal-title">Simular Rota</span>
-                <button class="close-btn" onclick="closeModal('modalSimulator')">×</button>
+                <button class="close" onclick="fecharModal('mdlSim')">×</button>
             </div>
-            <div style="flex:1; display:flex; flex-direction:column;">
-                <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:10px;">Pesquise a rua abaixo. O início será sua localização atual.</p>
-                <div id="simMap" style="flex:1; width:100%; border-radius:10px; margin-bottom:10px; min-height: 300px;"></div>
-                <div style="background:#0f172a; padding:15px; border-radius:10px; text-align:center;">
-                    <div style="color:#64748b; font-size:0.8rem;">ESTIMATIVA (BANDEIRA ATUAL)</div>
-                    <div id="simPrice" style="color:var(--primary); font-size:1.8rem; font-weight:bold;">R$ 0,00</div>
-                    <div id="simDist" style="color:white; font-size:0.9rem;">0.0 km | 0 min</div>
-                </div>
-                <button onclick="closeModal('modalSimulator')" style="margin-top:10px; padding:15px; background:var(--accent); border:none; color:white; border-radius:10px; font-weight:bold;">FECHAR E VOLTAR</button>
+            <div id="simMap" style="flex:1; width:100%; border-radius:10px; margin-bottom:10px; background:#ccc;"></div>
+            <div style="background:#0f172a; padding:15px; border-radius:10px; text-align:center;">
+                <div style="font-size:0.8rem; color:#94a3b8;">ESTIMATIVA</div>
+                <div id="simPrice" style="font-size:2rem; font-weight:bold; color:var(--primary);">R$ 0,00</div>
+                <div id="simDist" style="color:white;">0 km | 0 min</div>
             </div>
+            <button class="btn btn-gray" onclick="fecharModal('mdlSim')" style="margin-top:10px;">FECHAR E VOLTAR</button>
         </div>
     </div>
 
-    <div id="modalHistory" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
+    <div id="mdlHist" class="modal-bg">
+        <div class="modal-box">
+            <div class="modal-head">
                 <span class="modal-title">Histórico</span>
-                <button class="close-btn" onclick="closeModal('modalHistory')">×</button>
+                <button class="close" onclick="fecharModal('mdlHist')">×</button>
             </div>
-            <div id="historyList" style="max-height:60vh; overflow-y:auto;"></div>
-            <button onclick="clearHistory()" style="margin-top:10px; padding:15px; background:#ef4444; border:none; color:white; border-radius:10px; width:100%;">LIMPAR TUDO</button>
+            <div id="histList" style="flex:1; margin-bottom:10px;"></div>
+            <button class="btn btn-red" onclick="limparHistorico()">LIMPAR TUDO</button>
         </div>
     </div>
 
-    <div id="modalAdmin" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="modal-title">Admin Motoristas</span>
-                <button class="close-btn" onclick="closeModal('modalAdmin')">×</button>
+    <div id="mdlAdmin" class="modal-bg">
+        <div class="modal-box">
+            <div class="modal-head">
+                <span class="modal-title">Administrador</span>
+                <button class="close" onclick="fecharModal('mdlAdmin')">×</button>
             </div>
-            <div id="adminLogin">
-                <input type="password" id="adminPass" class="input-dark" placeholder="Senha Mestra" style="text-align:center;">
-                <button class="btn-big" style="background:var(--accent); margin-top:10px;" onclick="authAdmin()">ACESSAR</button>
+            <div id="loginArea">
+                <input type="password" id="adminPass" class="input-field" placeholder="Senha Mestra" style="text-align:center;">
+                <button class="btn btn-green" onclick="fazerLoginAdmin()">ENTRAR</button>
             </div>
-            <div id="adminPanel" style="display:none;">
-                <div id="driversList"></div>
+            <div id="painelAdmin" style="display:none;">
+                <div id="listaMotoristas">Carregando...</div>
             </div>
         </div>
     </div>
@@ -202,7 +191,7 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <script>
-        // --- 1. CONFIGURAÇÃO FIREBASE ---
+        // --- CONFIG FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyBzD2q7VWFM1jGqj-787M3AZV0_I9uFZ_s",
             authDomain: "vaga-especial-ff7d3.firebaseapp.com",
@@ -212,347 +201,334 @@
             messagingSenderId: "220203379880",
             appId: "1:220203379880:web:3ed69498dd1a7c3049e69d"
         };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let driver = JSON.parse(localStorage.getItem('taxi_driver')) || null;
-        
-        // CONFIG PADRÃO (Valores Iniciais)
-        let config = JSON.parse(localStorage.getItem('taxi_config_v3')) || {
-            base1: 6.00, km1: 3.50, 
-            base2: 8.00, km2: 4.50, 
-            priceMin: 0.50,
-            autoStart: 22, autoEnd: 6
+        // --- VARIAVEIS ---
+        let config = JSON.parse(localStorage.getItem('taxi_cfg_11')) || {
+            b1: 6.00, k1: 3.50, b2: 8.00, k2: 4.50, min: 0.50,
+            hIni: 22, hFim: 6
         };
+        let motorista = JSON.parse(localStorage.getItem('taxi_driver_11'));
+        let corrida = { rodando: false, pausado: false, inicio: 0, tempo: 0, dist: 0, valor: 0, flag: 1, manual: false };
+        let timer, watchId, lastPos, simMap, rotaControl;
 
-        // VARIÁVEIS GLOBAIS
-        let isRunning = false, isPaused = false;
-        let startTime = 0, elapsedTime = 0, totalDistance = 0;
-        let lastLat = null, lastLng = null, timerInterval = null, watchId = null;
-        let currentFare = 0;
-        let currentFlag = 1; 
-        let isManualFlag = false; 
-        let isLocked = false;
-        let simMap, routingControl;
-        let lastSimAddress = "Rota GPS";
-
+        // --- INICIO ---
         window.onload = () => {
-            checkDriverRegistration();
-            checkAutoFlag();
-            updateDisplay();
-            startClock();
-            setInterval(checkAutoFlag, 60000); 
+            verificarMotorista();
+            setInterval(atualizarRelogio, 1000);
+            setInterval(checarHorario, 60000);
+            checarHorario();
+            atualizarTela();
         };
 
-        // --- RELÓGIO DIGITAL ---
-        function startClock() {
-            setInterval(() => {
-                const now = new Date();
-                document.getElementById('liveClock').innerText = now.toLocaleTimeString();
+        function atualizarRelogio() {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }
+
+        async function verificarMotorista() {
+            if(!motorista) {
+                const { value: form } = await Swal.fire({
+                    title: 'Bem-vindo, Motorista!',
+                    html: `<input id="nome" class="input-field" placeholder="Seu Nome"><input id="placa" class="input-field" placeholder="Placa"><input id="cel" class="input-field" placeholder="Celular">`,
+                    confirmButtonText: 'SALVAR', confirmButtonColor: '#22c55e', allowOutsideClick: false,
+                    preConfirm: () => { return { nome: document.getElementById('nome').value, placa: document.getElementById('placa').value, cel: document.getElementById('cel').value, id: Date.now() } }
+                });
+                if(form) {
+                    motorista = form;
+                    localStorage.setItem('taxi_driver_11', JSON.stringify(motorista));
+                    db.ref('drivers/' + motorista.id).set(motorista);
+                }
+            }
+            if(motorista) document.getElementById('driverName').innerText = `${motorista.nome} (${motorista.placa})`;
+        }
+
+        // --- LÓGICA DE BANDEIRA E PREÇO (1.5KM) ---
+        function checarHorario() {
+            if(corrida.manual) return;
+            const h = new Date().getHours();
+            // Lógica de intervalo (ex: das 22 as 6)
+            let isB2 = (config.hIni > config.hFim) ? (h >= config.hIni || h < config.hFim) : (h >= config.hIni && h < config.hFim);
+            
+            aplicarBandeira(isB2 ? 2 : 1, true);
+        }
+
+        function mudarBandeira(num) {
+            // Se estiver bloqueado por horario automatico
+            const lockDiv = document.getElementById('flagLock');
+            if(lockDiv.style.display === 'block') {
+                return Swal.fire('Bloqueado', 'Horário Automático Ativo.', 'warning');
+            }
+            corrida.manual = true;
+            aplicarBandeira(num, false);
+        }
+
+        function aplicarBandeira(num, auto) {
+            corrida.flag = num;
+            document.getElementById('btnB1').className = num === 1 ? 'flag-btn active' : 'flag-btn';
+            document.getElementById('btnB2').className = num === 2 ? 'flag-btn active-2' : 'flag-btn';
+            
+            // Trava Visual
+            const lockDiv = document.getElementById('flagLock');
+            if(auto) {
+                lockDiv.style.display = 'block';
+                document.getElementById('btnB1').style.opacity = '0.5';
+                document.getElementById('btnB2').style.opacity = '0.5';
+            } else {
+                lockDiv.style.display = 'none';
+                document.getElementById('btnB1').style.opacity = '1';
+                document.getElementById('btnB2').style.opacity = '1';
+            }
+            calcularValor();
+        }
+
+        function calcularValor() {
+            // REGRA 1.5 KM
+            let base = corrida.flag === 1 ? config.b1 : config.b2;
+            let precoKm = corrida.flag === 1 ? config.k1 : config.k2;
+            
+            if(corrida.dist <= 1.5) {
+                // Menos de 1.5km = SÓ A BANDEIRADA
+                corrida.valor = base;
+            } else {
+                // Mais de 1.5km = Bandeirada + (KM Excedente) + Tempo Total
+                let excedente = corrida.dist - 1.5;
+                let valorDist = excedente * precoKm;
+                let valorTempo = (corrida.tempo / 60) * config.min;
+                corrida.valor = base + valorDist + valorTempo;
+            }
+            atualizarTela();
+        }
+
+        function atualizarTela() {
+            document.getElementById('displayVal').innerText = `R$ ${corrida.valor.toFixed(2)}`;
+            document.getElementById('displayKm').innerText = corrida.dist.toFixed(1);
+            
+            const m = Math.floor(corrida.tempo / 60).toString().padStart(2,'0');
+            const s = (corrida.tempo % 60).toString().padStart(2,'0');
+            document.getElementById('displayTempo').innerText = `${m}:${s}`;
+        }
+
+        // --- CONTROLES DA CORRIDA ---
+        function iniciarCorrida() {
+            corrida.rodando = true;
+            corrida.pausado = false;
+            corrida.tempo = 0;
+            corrida.dist = 0;
+            corrida.manual = false; // Reseta manual para checar horario de novo
+            checarHorario(); 
+            
+            document.getElementById('btnStartBox').style.display = 'none';
+            document.getElementById('btnRunBox').style.display = 'flex';
+            
+            // GPS
+            if(navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(pos => {
+                    if(!corrida.pausado && corrida.rodando) {
+                        if(lastPos) {
+                            let d = calcDist(lastPos.coords.latitude, lastPos.coords.longitude, pos.coords.latitude, pos.coords.longitude);
+                            if(d > 0.005) { // Filtro 5m
+                                corrida.dist += d;
+                                calcularValor();
+                            }
+                        }
+                        lastPos = pos;
+                    }
+                }, null, { enableHighAccuracy: true });
+            }
+
+            timer = setInterval(() => {
+                if(!corrida.pausado) {
+                    corrida.tempo++;
+                    calcularValor(); // Atualiza valor se estiver > 1.5km (por causa do tempo)
+                }
             }, 1000);
         }
 
-        // --- 2. BANDEIRAS E TRAVA ---
-        function checkAutoFlag() {
-            if(isManualFlag) return; 
-            
-            const hour = new Date().getHours();
-            let isFlag2 = false;
-            // Verifica horário automático
-            if(config.autoStart > config.autoEnd) {
-                isFlag2 = (hour >= config.autoStart || hour < config.autoEnd);
-            } else {
-                isFlag2 = (hour >= config.autoStart && hour < config.autoEnd);
-            }
-            
-            // TRAVA VISUAL
-            if(isFlag2) {
-                isLocked = true;
-                document.getElementById('flagLockMsg').style.display = 'block';
-                document.getElementById('btnFlag1').classList.add('locked');
-                document.getElementById('btnFlag2').classList.add('locked');
-            } else {
-                isLocked = false;
-                document.getElementById('flagLockMsg').style.display = 'none';
-                document.getElementById('btnFlag1').classList.remove('locked');
-                document.getElementById('btnFlag2').classList.remove('locked');
-            }
-            
-            setFlagUI(isFlag2 ? 2 : 1);
+        function pausarCorrida() {
+            corrida.pausado = !corrida.pausado;
+            const btn = document.getElementById('btnPausa');
+            btn.innerHTML = corrida.pausado ? '▶ CONTINUAR' : '<svg viewBox="0 0 24 24" fill="white" width="24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            btn.style.background = corrida.pausado ? '#eab308' : '#334155';
         }
 
-        function setManualFlag(flag) {
-            if(isLocked) return Swal.fire('Bloqueado', 'Mudança automática ativa pelo horário.', 'warning');
-            isManualFlag = true;
-            setFlagUI(flag);
-        }
-
-        function setFlagUI(flag) {
-            currentFlag = flag;
-            document.getElementById('btnFlag1').className = flag === 1 ? 'flag-btn active' : 'flag-btn';
-            document.getElementById('btnFlag2').className = flag === 2 ? 'flag-btn active-2' : 'flag-btn';
-            if(isRunning) calculateFare(); 
-            updateDisplay();
-        }
-
-        // --- 3. CADASTRO ---
-        async function checkDriverRegistration() {
-            if(!driver) {
-                const { value: f } = await Swal.fire({
-                    title: 'Cadastro Motorista',
-                    html: `<input id="swal-name" class="swal2-input" placeholder="Nome"><input id="swal-plate" class="swal2-input" placeholder="Placa"><input id="swal-phone" class="swal2-input" placeholder="Celular">`,
-                    focusConfirm: false, allowOutsideClick: false,
-                    preConfirm: () => { return { name: document.getElementById('swal-name').value, plate: document.getElementById('swal-plate').value, phone: document.getElementById('swal-phone').value, id: Date.now() } }
-                });
-                if (f) { driver = f; localStorage.setItem('taxi_driver', JSON.stringify(driver)); db.ref('drivers/' + driver.id).set(driver); }
-            }
-            if(driver) {
-                document.getElementById('headerDriverName').innerText = driver.name;
-                document.getElementById('headerId').innerText = `ID: ${driver.id}`;
-            }
-        }
-
-        // --- 4. CORRIDA ---
-        function startRace() {
-            lastSimAddress = "Rota GPS"; // Reseta destino
-            isRunning = true; isPaused = false;
-            startTime = Date.now(); elapsedTime = 0; totalDistance = 0;
-            lastLat = null; lastLng = null;
-            document.getElementById('startRow').style.display = 'none';
-            document.getElementById('runningRow').style.display = 'flex';
-            startGPS();
-            timerInterval = setInterval(updateTimer, 1000);
-        }
-
-        function togglePause() {
-            isPaused = !isPaused;
-            document.getElementById('btnPause').style.background = isPaused ? '#eab308' : '#334155';
-        }
-
-        function finishRace() {
-            clearInterval(timerInterval);
+        function encerrarCorrida() {
+            clearInterval(timer);
             navigator.geolocation.clearWatch(watchId);
-            isRunning = false;
+            corrida.rodando = false;
             
-            const ride = { 
-                date: new Date().toLocaleString(), 
-                dist: totalDistance.toFixed(2), 
-                time: formatTime(elapsedTime), 
-                val: currentFare.toFixed(2), 
-                flag: currentFlag, 
-                driver: driver.name,
-                dest: lastSimAddress 
+            // Salva Firebase
+            const reg = {
+                data: new Date().toLocaleString(),
+                val: corrida.valor.toFixed(2),
+                dist: corrida.dist.toFixed(2),
+                tempo: document.getElementById('displayTempo').innerText,
+                flag: corrida.flag,
+                mot: motorista.name,
+                dest: 'Rota GPS' // Default
             };
-            db.ref('taxi_rides').push(ride);
+            db.ref('taxi_rides').push(reg);
 
             Swal.fire({
-                title: 'Total a Pagar',
-                html: `<div style="background:#f1f5f9; color:#0f172a; padding:15px; border-radius:10px;">
-                        <h1 style="color:#22c55e">R$ ${currentFare.toFixed(2)}</h1>
-                        <p>Dist: ${totalDistance.toFixed(2)}km <br> Tempo: ${formatTime(elapsedTime)} <br> Bandeira: ${currentFlag}</p>
-                       </div>`,
-                showCancelButton: true, confirmButtonText: 'Nova Corrida', cancelButtonText: 'Enviar Recibo', cancelButtonColor: '#3b82f6'
-            }).then((result) => {
-                if(result.dismiss === Swal.DismissReason.cancel) shareRide(ride);
-                resetApp();
+                title: 'Corrida Finalizada',
+                html: `<h1 style="color:#22c55e">R$ ${reg.val}</h1><p>${reg.dist}km | ${reg.tempo}</p>`,
+                confirmButtonText: 'Nova Corrida',
+                showCancelButton: true, cancelButtonText: 'Recibo Zap'
+            }).then((res) => {
+                if(res.dismiss === Swal.DismissReason.cancel) {
+                    const txt = `🚖 *Táxi ${motorista.nome}*\n💰 Valor: R$ ${reg.val}\n🏁 Dist: ${reg.dist}km\n⏱ Tempo: ${reg.tempo}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`);
+                }
+                // Reset
+                document.getElementById('btnStartBox').style.display = 'block';
+                document.getElementById('btnRunBox').style.display = 'none';
+                corrida.valor = 0; corrida.dist = 0; corrida.tempo = 0;
+                calcularValor();
             });
         }
 
-        function resetApp() {
-            document.getElementById('startRow').style.display = 'block';
-            document.getElementById('runningRow').style.display = 'none';
-            totalDistance = 0; elapsedTime = 0; currentFare = 0;
-            calculateFare(); // Reseta valor visual
-            updateDisplay();
-        }
-
-        function updateTimer() {
-            if(!isPaused) { elapsedTime++; calculateFare(); updateDisplay(); }
-        }
-
-        function startGPS() {
-            watchId = navigator.geolocation.watchPosition(pos => {
-                if(isPaused) return;
-                const lat = pos.coords.latitude; const lng = pos.coords.longitude;
-                if(lastLat != null) {
-                    const d = getDist(lastLat, lastLng, lat, lng);
-                    if(d > 0.005) { totalDistance += d; calculateFare(); updateDisplay(); }
-                }
-                lastLat = lat; lastLng = lng;
-            }, null, { enableHighAccuracy: true });
-        }
-
-        function calculateFare() {
-            const activeBase = currentFlag === 1 ? config.base1 : config.base2;
-            const activeKm = currentFlag === 1 ? config.km1 : config.km2;
-            
-            // REGRA 1.5KM:
-            if(totalDistance <= 1.5) {
-                currentFare = activeBase;
-            } else {
-                let distCost = (totalDistance - 1.5) * activeKm;
-                let timeCost = (elapsedTime / 60) * config.priceMin;
-                currentFare = activeBase + distCost + timeCost;
-            }
-        }
-
-        function updateDisplay() {
-            if(!isRunning) {
-                const base = currentFlag === 1 ? config.base1 : config.base2;
-                document.getElementById('displayPrice').innerText = `R$ ${base.toFixed(2)}`;
-            } else {
-                document.getElementById('displayPrice').innerText = `R$ ${currentFare.toFixed(2)}`;
-            }
-            document.getElementById('displayDist').innerText = totalDistance.toFixed(1);
-            document.getElementById('displayTime').innerText = formatTime(elapsedTime);
-        }
-
-        // --- 5. SIMULADOR COM ROTA ---
-        function openSimulator() {
-            document.getElementById('modalSimulator').style.display = 'flex';
+        // --- SIMULADOR ---
+        function abrirSimulador() {
+            document.getElementById('mdlSim').style.display = 'flex';
             setTimeout(() => {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const myLat = pos.coords.latitude;
-                    const myLng = pos.coords.longitude;
-
-                    if(!simMap) {
-                        simMap = L.map('simMap').setView([myLat, myLng], 14);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(simMap);
-                        
-                        L.Control.geocoder({
-                            defaultMarkGeocode: false,
-                            placeholder: "Pesquise a rua destino..."
-                        }).on('markgeocode', function(e) {
-                            const destLatLng = e.geocode.center;
-                            lastSimAddress = e.geocode.name; 
-                            
-                            if(routingControl) simMap.removeControl(routingControl);
-                            
-                            routingControl = L.Routing.control({
-                                waypoints: [ L.latLng(myLat, myLng), destLatLng ],
-                                createMarker: function(i, wp) {
-                                    return L.marker(wp.latLng, {
-                                        icon: L.icon({
-                                            iconUrl: i===0 ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png' : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                                            iconSize: [25, 41], iconAnchor: [12, 41]
-                                        })
-                                    }).bindPopup(i===0 ? "Você" : "Destino");
-                                },
-                                show: false
-                            }).on('routesfound', function(e) {
-                                const distKm = e.routes[0].summary.totalDistance / 1000;
-                                const timeMin = e.routes[0].summary.totalTime / 60;
-                                
-                                const activeBase = currentFlag === 1 ? config.base1 : config.base2;
-                                const activeKm = currentFlag === 1 ? config.km1 : config.km2;
-                                let estPrice = activeBase;
-                                if(distKm > 1.5) {
-                                    estPrice += (distKm - 1.5) * activeKm;
-                                    estPrice += timeMin * config.priceMin;
-                                }
-
-                                document.getElementById('simPrice').innerText = `R$ ${estPrice.toFixed(2)}`;
-                                document.getElementById('simDist').innerText = `${distKm.toFixed(1)} km | ${timeMin.toFixed(0)} min`;
-                            }).addTo(simMap);
-                            
-                            simMap.fitBounds(L.latLngBounds([L.latLng(myLat, myLng), destLatLng]));
-                        }).addTo(simMap);
-                        
-                        L.marker([myLat, myLng]).addTo(simMap).bindPopup("Você está aqui").openPopup();
-                    } else {
-                        simMap.setView([myLat, myLng], 14);
-                    }
-                    simMap.invalidateSize();
+                if(!simMap) {
+                    simMap = L.map('simMap').setView([-21.135, -44.261], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(simMap);
+                    
+                    // Busca
+                    L.Control.geocoder({ defaultMarkGeocode: false, placeholder: "Digite o destino..." })
+                    .on('markgeocode', function(e) {
+                        const dest = e.geocode.center;
+                        traçarRotaSimulada(dest);
+                    }).addTo(simMap);
+                }
+                simMap.invalidateSize();
+                
+                // Pega local atual
+                navigator.geolocation.getCurrentPosition(p => {
+                    const me = L.latLng(p.coords.latitude, p.coords.longitude);
+                    simMap.setView(me, 14);
+                    // Guarda local atual
+                    simMap.myPos = me;
+                    L.marker(me).addTo(simMap).bindPopup('Você').openPopup();
                 });
             }, 300);
         }
 
-        // --- 6. CONFIGURAÇÕES (CORRIGIDA) ---
-        async function openSettingsModal() {
-            const { value: v } = await Swal.fire({
-                title: 'Ajustes',
+        function traçarRotaSimulada(dest) {
+            if(!simMap.myPos) return alert("Aguarde o GPS...");
+            if(rotaControl) simMap.removeControl(rotaControl);
+            
+            rotaControl = L.Routing.control({
+                waypoints: [ simMap.myPos, dest ],
+                createMarker: function() { return null; }, show: false
+            }).on('routesfound', function(e) {
+                const km = e.routes[0].summary.totalDistance / 1000;
+                const min = e.routes[0].summary.totalTime / 60;
+                
+                // Calcula Estimativa (Regra 1.5km)
+                let base = corrida.flag === 1 ? config.b1 : config.b2;
+                let kP = corrida.flag === 1 ? config.k1 : config.k2;
+                let total = base;
+                
+                if(km > 1.5) total += (km - 1.5) * kP;
+                total += min * config.min;
+
+                document.getElementById('simPrice').innerText = `R$ ${total.toFixed(2)}`;
+                document.getElementById('simDist').innerText = `${km.toFixed(1)} km | ${min.toFixed(0)} min`;
+            }).addTo(simMap);
+        }
+
+        // --- CONFIGURAÇÕES (O CORRIGIDO) ---
+        async function abrirConfiguracoes() {
+            const { value: novo } = await Swal.fire({
+                title: 'Ajuste de Tarifas',
                 html: `
-                    <div class="config-grid">
-                        <div class="config-item"><label>Bandeirada 1 (R$)</label><input id="s-b1" type="number" class="input-dark" value="${config.base1}"></div>
-                        <div class="config-item"><label>Bandeirada 2 (R$)</label><input id="s-b2" type="number" class="input-dark" value="${config.base2}"></div>
-                        <div class="config-item"><label>Preço KM 1 (R$)</label><input id="s-k1" type="number" class="input-dark" value="${config.km1}"></div>
-                        <div class="config-item"><label>Preço KM 2 (R$)</label><input id="s-k2" type="number" class="input-dark" value="${config.km2}"></div>
+                    <div class="input-row">
+                        <div><label class="input-label">Band 1 (R$)</label><input id="c_b1" type="number" class="input-field" value="${config.b1}"></div>
+                        <div><label class="input-label">Km 1 (R$)</label><input id="c_k1" type="number" class="input-field" value="${config.k1}"></div>
                     </div>
-                    <div class="config-item"><label>Preço Minuto (R$)</label><input id="s-min" type="number" class="input-dark" value="${config.priceMin}"></div>
-                    <hr style="border-color:#334155; margin:15px 0;">
-                    <label style="color:#eab308; font-size:0.8rem; font-weight:bold;">MUDANÇA AUTOMÁTICA</label>
-                    <div class="config-grid" style="margin-top:10px;">
-                        <div class="config-item"><label>Início B2 (Hora)</label><input id="s-h1" type="number" class="input-dark" value="${config.autoStart}"></div>
-                        <div class="config-item"><label>Fim B2 (Hora)</label><input id="s-h2" type="number" class="input-dark" value="${config.autoEnd}"></div>
+                    <div class="input-row">
+                        <div><label class="input-label">Band 2 (R$)</label><input id="c_b2" type="number" class="input-field" value="${config.b2}"></div>
+                        <div><label class="input-label">Km 2 (R$)</label><input id="c_k2" type="number" class="input-field" value="${config.k2}"></div>
+                    </div>
+                    <div><label class="input-label">Minuto Parado (R$)</label><input id="c_min" type="number" class="input-field" value="${config.min}"></div>
+                    <hr>
+                    <div class="input-label" style="color:var(--gold)">AUTO BANDEIRA 2 (HORAS)</div>
+                    <div class="input-row">
+                        <div><label class="input-label">Início</label><input id="c_hi" type="number" class="input-field" value="${config.hIni}"></div>
+                        <div><label class="input-label">Fim</label><input id="c_hf" type="number" class="input-field" value="${config.hFim}"></div>
                     </div>
                 `,
-                confirmButtonText: 'SALVAR E VOLTAR',
-                confirmButtonColor: '#22c55e',
-                showCancelButton: true,
-                focusConfirm: false,
+                confirmButtonText: 'SALVAR', confirmButtonColor: '#22c55e',
                 preConfirm: () => {
                     return {
-                        base1: parseFloat(document.getElementById('s-b1').value),
-                        km1: parseFloat(document.getElementById('s-k1').value),
-                        base2: parseFloat(document.getElementById('s-b2').value),
-                        km2: parseFloat(document.getElementById('s-k2').value),
-                        priceMin: parseFloat(document.getElementById('s-min').value),
-                        autoStart: parseInt(document.getElementById('s-h1').value),
-                        autoEnd: parseInt(document.getElementById('s-h2').value)
+                        b1: parseFloat(document.getElementById('c_b1').value),
+                        k1: parseFloat(document.getElementById('c_k1').value),
+                        b2: parseFloat(document.getElementById('c_b2').value),
+                        k2: parseFloat(document.getElementById('c_k2').value),
+                        min: parseFloat(document.getElementById('c_min').value),
+                        hIni: parseInt(document.getElementById('c_hi').value),
+                        hFim: parseInt(document.getElementById('c_hf').value)
                     }
                 }
             });
-            if (v) { config = v; localStorage.setItem('taxi_config_v3', JSON.stringify(config)); Swal.fire('Salvo!', '', 'success'); checkAutoFlag(); }
+            if(novo) {
+                config = novo;
+                localStorage.setItem('taxi_cfg_11', JSON.stringify(config));
+                checarHorario(); // Reaplica regras
+                calcularValor(); // Recalcula se estiver parado
+                Swal.fire('Salvo!', '', 'success');
+            }
         }
 
-        // --- 7. ADMIN ---
-        function authAdmin() {
+        // --- ADMIN ---
+        function abrirAdmin() { document.getElementById('mdlAdmin').style.display = 'flex'; }
+        function fazerLoginAdmin() {
             if(document.getElementById('adminPass').value === 'sjdr2025') {
-                document.getElementById('adminLogin').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-                loadDrivers();
+                document.getElementById('loginArea').style.display = 'none';
+                document.getElementById('painelAdmin').style.display = 'block';
+                listarDrivers();
             } else Swal.fire('Erro', 'Senha incorreta', 'error');
         }
-        function loadDrivers() {
-            const list = document.getElementById('driversList');
-            list.innerHTML = 'Carregando...';
+        function listarDrivers() {
             db.ref('drivers').once('value').then(snap => {
-                list.innerHTML = '';
-                if(!snap.exists()) return list.innerHTML = 'Nenhum motorista.';
+                let html = '';
                 snap.forEach(c => {
-                    const d = c.val();
-                    list.innerHTML += `<div class="list-item"><div style="color:white;">${d.name}</div><div style="color:#aaa;">${d.plate}</div><button onclick="blockDriver(${d.id})" style="color:red; background:none; border:none; margin-top:5px;">Bloquear</button></div>`;
-                });
-            });
-        }
-        function blockDriver(id) { if(confirm('Bloquear?')) { db.ref('drivers/'+id).remove(); loadDrivers(); } }
-
-        // --- 8. HISTÓRICO E EXTRAS ---
-        function showHistory() {
-            document.getElementById('modalHistory').style.display = 'flex';
-            const list = document.getElementById('historyList');
-            list.innerHTML = 'Carregando...';
-            db.ref('taxi_rides').limitToLast(20).once('value').then(snap => {
-                list.innerHTML = '';
-                if(!snap.exists()) return list.innerHTML = 'Vazio.';
-                const arr = []; snap.forEach(c => arr.push(c.val()));
-                arr.reverse().forEach(r => {
-                    const dest = r.dest || "Rota Local";
-                    list.innerHTML += `<div class="list-item" style="color:#ccc">
-                        <div style="display:flex; justify-content:space-between; color:white;"><b>R$ ${r.val}</b> <small>${r.date}</small></div>
-                        <div style="font-size:0.8rem; margin-top:5px;">📍 ${dest}</div>
-                        <div style="font-size:0.7rem; color:#64748b;">${r.dist}km | ${r.time} | Band ${r.flag}</div>
+                    let d = c.val();
+                    html += `<div style="background:#0f172a; padding:10px; margin-bottom:5px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
+                        <div><b style="color:white">${d.nome}</b><br><small style="color:#aaa">${d.placa}</small></div>
+                        <button onclick="bloquearDriver(${d.id})" style="color:#ef4444; background:none; border:none;">BLOQ</button>
                     </div>`;
                 });
+                document.getElementById('listaMotoristas').innerHTML = html || 'Nenhum.';
             });
         }
-        function clearHistory() { if(confirm('Apagar tudo?')) { db.ref('taxi_rides').remove(); document.getElementById('historyList').innerHTML = ''; } }
-        function shareApp() { if(navigator.share) navigator.share({title: 'Taxímetro', url: window.location.href}); }
-        function shareRide(r) { const txt = `🚖 RECIBO\nValor: R$ ${r.val}\nDist: ${r.dist}km\nTempo: ${r.time}\nBandeira: ${r.flag}\nMot: ${r.driver}`; if(navigator.share) navigator.share({text: txt}); }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function openAdmin() { document.getElementById('modalAdmin').style.display = 'flex'; }
-        function formatTime(s) { const m=Math.floor(s/60).toString().padStart(2,'0'); const sc=(s%60).toString().padStart(2,'0'); return `${m}:${sc}`; }
-        function getDist(lat1, lon1, lat2, lon2) { const R=6371; const dLat=(lat2-lat1)*Math.PI/180; const dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); }
+        function bloquearDriver(id) {
+            if(confirm('Bloquear?')) { db.ref('drivers/'+id).remove(); listarDrivers(); }
+        }
+
+        // --- EXTRAS ---
+        function abrirHistorico() {
+            document.getElementById('mdlHist').style.display = 'flex';
+            db.ref('taxi_rides').limitToLast(20).once('value').then(snap => {
+                let html = '';
+                let arr = [];
+                snap.forEach(c => arr.push(c.val()));
+                arr.reverse().forEach(r => {
+                    html += `<div style="background:#0f172a; padding:10px; margin-bottom:5px; border-radius:5px; border-left:3px solid var(--primary);">
+                        <div style="display:flex; justify-content:space-between; color:white"><b>R$ ${r.val}</b> <small>${r.data}</small></div>
+                        <small style="color:#aaa">${r.dist}km | ${r.tempo} | ${r.mot}</small>
+                    </div>`;
+                });
+                document.getElementById('histList').innerHTML = html || '<p style="text-align:center; color:#aaa">Vazio</p>';
+            });
+        }
+        function limparHistorico() { if(confirm('Limpar tudo?')) { db.ref('taxi_rides').remove(); document.getElementById('histList').innerHTML=''; }}
+        function compartilharApp() { if(navigator.share) navigator.share({title:'Taxímetro', url:window.location.href}); }
+        function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+        function calcDist(lat1, lon1, lat2, lon2) { const R=6371; const dLat=(lat2-lat1)*Math.PI/180; const dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); }
+
     </script>
 </body>
 </html>
