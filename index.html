@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Taxímetro Enterprise 9.0</title>
+    <title>Taxímetro Enterprise 10.0</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     
@@ -20,7 +20,7 @@
         :root {
             --bg: #0f172a; --card: #1e293b; --primary: #22c55e;
             --danger: #ef4444; --accent: #3b82f6; --gold: #eab308;
-            --text: #f8fafc;
+            --text: #f8fafc; --disabled: #475569;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; flex-direction: column; overflow: hidden; }
@@ -29,19 +29,22 @@
         .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid #334155; z-index: 10; }
         .brand { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; }
         .brand span { color: var(--primary); }
-        .driver-info { font-size: 0.7rem; color: #94a3b8; text-align: right; }
-        .driver-name { color: var(--gold); font-weight: bold; }
+        .header-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
+        .clock { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 0.9rem; font-weight: bold; margin-bottom: 2px; }
+        .driver-info { font-size: 0.65rem; color: #94a3b8; }
+        .driver-name { color: var(--gold); font-weight: bold; text-transform: uppercase; }
 
         /* PAINEL */
         .main-display { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 70%); position: relative; }
         .price-label { font-size: 0.8rem; color: #64748b; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
         .price-value { font-family: 'JetBrains Mono', monospace; font-size: 4rem; font-weight: 700; color: var(--primary); text-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
         
-        /* SELETOR DE BANDEIRA (Novo) */
+        /* SELETOR DE BANDEIRA */
         .flag-selector { display: flex; gap: 10px; margin-top: 15px; background: #334155; padding: 5px; border-radius: 30px; }
         .flag-btn { padding: 8px 20px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; cursor: pointer; border: none; color: #94a3b8; background: transparent; transition: 0.2s; }
         .flag-btn.active { background: var(--primary); color: #000; box-shadow: 0 2px 10px rgba(34,197,94,0.3); }
         .flag-btn.active-2 { background: var(--gold); color: #000; box-shadow: 0 2px 10px rgba(234,179,8,0.3); }
+        .flag-btn.locked { opacity: 0.5; cursor: not-allowed; pointer-events: none; } /* Trava visual */
 
         /* INFO GRID */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; padding: 0 30px; margin-top: 25px; }
@@ -64,17 +67,16 @@
         .dock-btn:active { color: var(--primary); }
 
         /* MODAIS */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: flex-end; }
-        .modal-content { width: 100%; background: #1e293b; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: none; align-items: flex-end; }
+        .modal-content { width: 100%; background: #1e293b; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; max-height: 95vh; overflow-y: auto; display: flex; flex-direction: column; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .modal-title { font-size: 1.1rem; font-weight: bold; color: white; }
         .close-btn { background: none; border: none; color: #94a3b8; font-size: 1.5rem; }
-        
         .input-dark { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; margin-bottom: 10px; }
         
-        /* SEARCH BOX DO MAPA */
-        .leaflet-control-geocoder { background: white; padding: 5px; border-radius: 5px; }
-        .leaflet-control-geocoder input { color: black; }
+        /* SEARCH BOX NO MAPA */
+        .leaflet-control-geocoder { background: white; border-radius: 5px; font-family: 'Inter', sans-serif; }
+        .leaflet-control-geocoder-icon { width: 30px; height: 30px; }
 
         /* CONFIG GRID */
         .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
@@ -87,7 +89,10 @@
 
     <div class="header">
         <div class="brand">TAXI<span>METER</span></div>
-        <div class="driver-info">Motorista: <span class="driver-name" id="headerDriverName">...</span></div>
+        <div class="header-right">
+            <div class="clock" id="liveClock">00:00:00</div>
+            <div class="driver-info">Mot: <span class="driver-name" id="headerDriverName">...</span> | <span id="headerId">...</span></div>
+        </div>
     </div>
 
     <div class="main-display">
@@ -98,6 +103,7 @@
             <button class="flag-btn active" id="btnFlag1" onclick="setManualFlag(1)">BANDEIRA 1</button>
             <button class="flag-btn" id="btnFlag2" onclick="setManualFlag(2)">BANDEIRA 2</button>
         </div>
+        <div id="flagLockMsg" style="font-size:0.6rem; color:#eab308; margin-top:5px; display:none;">🔒 BLOQUEIO AUTOMÁTICO ATIVO</div>
 
         <div class="info-grid">
             <div class="info-item">
@@ -106,7 +112,7 @@
             </div>
             <div class="info-item">
                 <div class="info-val" id="displayTime">00:00</div>
-                <div class="info-lbl">TEMPO</div>
+                <div class="info-lbl">TEMPO TOTAL</div>
             </div>
         </div>
     </div>
@@ -152,13 +158,14 @@
                 <button class="close-btn" onclick="closeModal('modalSimulator')">×</button>
             </div>
             <div style="flex:1; display:flex; flex-direction:column;">
-                <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:10px;">Use a lupa para buscar ou clique no mapa.</p>
+                <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:10px;">Pesquise a rua abaixo. O início será sua localização atual.</p>
                 <div id="simMap" style="flex:1; width:100%; border-radius:10px; margin-bottom:10px; min-height: 300px;"></div>
                 <div style="background:#0f172a; padding:15px; border-radius:10px; text-align:center;">
                     <div style="color:#64748b; font-size:0.8rem;">ESTIMATIVA (BANDEIRA ATUAL)</div>
                     <div id="simPrice" style="color:var(--primary); font-size:1.8rem; font-weight:bold;">R$ 0,00</div>
                     <div id="simDist" style="color:white; font-size:0.9rem;">0.0 km | 0 min</div>
                 </div>
+                <button onclick="closeModal('modalSimulator')" style="margin-top:10px; padding:15px; background:var(--accent); border:none; color:white; border-radius:10px; font-weight:bold;">FECHAR E VOLTAR</button>
             </div>
         </div>
     </div>
@@ -166,23 +173,23 @@
     <div id="modalHistory" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="modal-title">Histórico de Corridas</span>
+                <span class="modal-title">Histórico</span>
                 <button class="close-btn" onclick="closeModal('modalHistory')">×</button>
             </div>
             <div id="historyList" style="max-height:60vh; overflow-y:auto;"></div>
-            <button onclick="clearHistory()" style="margin-top:10px; padding:15px; background:#ef4444; border:none; color:white; border-radius:10px; width:100%;">LIMPAR HISTÓRICO</button>
+            <button onclick="clearHistory()" style="margin-top:10px; padding:15px; background:#ef4444; border:none; color:white; border-radius:10px; width:100%;">LIMPAR TUDO</button>
         </div>
     </div>
 
     <div id="modalAdmin" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="modal-title">Gestão de Motoristas</span>
+                <span class="modal-title">Admin Motoristas</span>
                 <button class="close-btn" onclick="closeModal('modalAdmin')">×</button>
             </div>
             <div id="adminLogin">
                 <input type="password" id="adminPass" class="input-dark" placeholder="Senha Mestra" style="text-align:center;">
-                <button class="btn-big" style="background:var(--accent); margin-top:10px;" onclick="authAdmin()">ENTRAR</button>
+                <button class="btn-big" style="background:var(--accent); margin-top:10px;" onclick="authAdmin()">ACESSAR</button>
             </div>
             <div id="adminPanel" style="display:none;">
                 <div id="driversList"></div>
@@ -195,7 +202,7 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <script>
-        // CONFIG FIREBASE
+        // --- 1. CONFIGURAÇÃO FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyBzD2q7VWFM1jGqj-787M3AZV0_I9uFZ_s",
             authDomain: "vaga-especial-ff7d3.firebaseapp.com",
@@ -209,49 +216,71 @@
         const db = firebase.database();
 
         let driver = JSON.parse(localStorage.getItem('taxi_driver')) || null;
-        
-        // CONFIG PADRÃO
-        let config = JSON.parse(localStorage.getItem('taxi_config_v2')) || {
+        let config = JSON.parse(localStorage.getItem('taxi_config_v3')) || {
             base1: 6.00, km1: 3.50, 
             base2: 8.00, km2: 4.50, 
             priceMin: 0.50,
             autoStart: 22, autoEnd: 6
         };
 
-        // VARIÁVEIS
+        // VARIÁVEIS GLOBAIS
         let isRunning = false, isPaused = false;
         let startTime = 0, elapsedTime = 0, totalDistance = 0;
         let lastLat = null, lastLng = null, timerInterval = null, watchId = null;
         let currentFare = 0;
-        let currentFlag = 1; // 1 ou 2
-        let isManualFlag = false; // Se o usuário clicou, não muda automático
+        let currentFlag = 1; 
+        let isManualFlag = false; 
+        let isLocked = false;
         let simMap, routingControl;
+        let lastSimAddress = "Rota GPS"; // Para salvar no histórico
 
         window.onload = () => {
             checkDriverRegistration();
             checkAutoFlag();
             updateDisplay();
-            // Verifica horário a cada minuto
+            startClock();
             setInterval(checkAutoFlag, 60000); 
         };
 
-        // --- 1. BANDEIRAS ---
+        // --- RELÓGIO DIGITAL ---
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('liveClock').innerText = now.toLocaleTimeString();
+            }, 1000);
+        }
+
+        // --- 2. BANDEIRAS E TRAVA ---
         function checkAutoFlag() {
-            if(isManualFlag) return; // Se usuário escolheu, não muda
+            if(isManualFlag) return; 
             
             const hour = new Date().getHours();
-            // Lógica de intervalo (ex: >22 OU <6)
             let isFlag2 = false;
+            // Verifica horário automático
             if(config.autoStart > config.autoEnd) {
                 isFlag2 = (hour >= config.autoStart || hour < config.autoEnd);
             } else {
                 isFlag2 = (hour >= config.autoStart && hour < config.autoEnd);
             }
             
+            // SE automático estiver ativo, TRAVA os botões
+            if(isFlag2) {
+                isLocked = true;
+                document.getElementById('flagLockMsg').style.display = 'block';
+                document.getElementById('btnFlag1').classList.add('locked');
+                document.getElementById('btnFlag2').classList.add('locked');
+            } else {
+                isLocked = false;
+                document.getElementById('flagLockMsg').style.display = 'none';
+                document.getElementById('btnFlag1').classList.remove('locked');
+                document.getElementById('btnFlag2').classList.remove('locked');
+            }
+            
             setFlagUI(isFlag2 ? 2 : 1);
         }
 
         function setManualFlag(flag) {
+            if(isLocked) return Swal.fire('Bloqueado', 'Mudança automática ativa pelo horário.', 'warning');
             isManualFlag = true;
             setFlagUI(flag);
         }
@@ -260,27 +289,31 @@
             currentFlag = flag;
             document.getElementById('btnFlag1').className = flag === 1 ? 'flag-btn active' : 'flag-btn';
             document.getElementById('btnFlag2').className = flag === 2 ? 'flag-btn active-2' : 'flag-btn';
-            updateDisplay(); // Atualiza preço se tiver corrida rodando
+            if(isRunning) calculateFare(); 
+            updateDisplay();
         }
 
-        // --- 2. CADASTRO ---
+        // --- 3. CADASTRO ---
         async function checkDriverRegistration() {
             if(!driver) {
-                const { value: formValues } = await Swal.fire({
+                const { value: f } = await Swal.fire({
                     title: 'Cadastro Motorista',
                     html: `<input id="swal-name" class="swal2-input" placeholder="Nome"><input id="swal-plate" class="swal2-input" placeholder="Placa"><input id="swal-phone" class="swal2-input" placeholder="Celular">`,
                     focusConfirm: false, allowOutsideClick: false,
-                    preConfirm: () => {
-                        return { name: document.getElementById('swal-name').value, plate: document.getElementById('swal-plate').value, phone: document.getElementById('swal-phone').value, id: Date.now() }
-                    }
+                    preConfirm: () => { return { name: document.getElementById('swal-name').value, plate: document.getElementById('swal-plate').value, phone: document.getElementById('swal-phone').value, id: Date.now() } }
                 });
-                if (formValues) { driver = formValues; localStorage.setItem('taxi_driver', JSON.stringify(driver)); db.ref('drivers/' + driver.id).set(driver); }
+                if (f) { driver = f; localStorage.setItem('taxi_driver', JSON.stringify(driver)); db.ref('drivers/' + driver.id).set(driver); }
             }
-            document.getElementById('headerDriverName').innerText = driver ? driver.name : '...';
+            if(driver) {
+                document.getElementById('headerDriverName').innerText = driver.name;
+                document.getElementById('headerId').innerText = `ID: ${driver.id}`;
+            }
         }
 
-        // --- 3. CORRIDA ---
+        // --- 4. CORRIDA ---
         function startRace() {
+            // Se usuário usou simulador antes, limpa o endereço salvo pois agora é GPS real
+            lastSimAddress = "Rota GPS";
             isRunning = true; isPaused = false;
             startTime = Date.now(); elapsedTime = 0; totalDistance = 0;
             lastLat = null; lastLng = null;
@@ -299,12 +332,25 @@
             clearInterval(timerInterval);
             navigator.geolocation.clearWatch(watchId);
             isRunning = false;
-            const ride = { date: new Date().toLocaleString(), dist: totalDistance.toFixed(2), time: formatTime(elapsedTime), val: currentFare.toFixed(2), flag: currentFlag, driver: driver.name };
+            
+            // Salva no histórico com o DESTINO
+            const ride = { 
+                date: new Date().toLocaleString(), 
+                dist: totalDistance.toFixed(2), 
+                time: formatTime(elapsedTime), 
+                val: currentFare.toFixed(2), 
+                flag: currentFlag, 
+                driver: driver.name,
+                dest: lastSimAddress // Usa o endereço do simulador se houver, ou "Rota GPS"
+            };
             db.ref('taxi_rides').push(ride);
 
             Swal.fire({
                 title: 'Total a Pagar',
-                html: `<div style="background:#f1f5f9; color:#0f172a; padding:15px; border-radius:10px;"><h1 style="color:#22c55e">R$ ${currentFare.toFixed(2)}</h1><p>Dist: ${totalDistance.toFixed(2)}km <br> Tempo: ${formatTime(elapsedTime)} <br> Bandeira: ${currentFlag}</p></div>`,
+                html: `<div style="background:#f1f5f9; color:#0f172a; padding:15px; border-radius:10px;">
+                        <h1 style="color:#22c55e">R$ ${currentFare.toFixed(2)}</h1>
+                        <p>Dist: ${totalDistance.toFixed(2)}km <br> Tempo: ${formatTime(elapsedTime)} <br> Bandeira: ${currentFlag}</p>
+                       </div>`,
                 showCancelButton: true, confirmButtonText: 'Nova Corrida', cancelButtonText: 'Enviar Recibo', cancelButtonColor: '#3b82f6'
             }).then((result) => {
                 if(result.dismiss === Swal.DismissReason.cancel) shareRide(ride);
@@ -316,6 +362,7 @@
             document.getElementById('startRow').style.display = 'block';
             document.getElementById('runningRow').style.display = 'none';
             totalDistance = 0; elapsedTime = 0; currentFare = 0;
+            calculateFare(); // Reseta valor visual para base
             updateDisplay();
         }
 
@@ -336,85 +383,106 @@
         }
 
         function calculateFare() {
-            // REGRA DOS 1.5KM:
-            // Cobra Bandeirada + Tempo SEMPRE.
-            // Cobra KM só o que passar de 1.5.
-            
             const activeBase = currentFlag === 1 ? config.base1 : config.base2;
             const activeKm = currentFlag === 1 ? config.km1 : config.km2;
             
-            let distCharge = 0;
-            if(totalDistance > 1.5) {
-                distCharge = (totalDistance - 1.5) * activeKm;
+            // REGRA: Até 1.5km paga só a bandeirada.
+            if(totalDistance <= 1.5) {
+                currentFare = activeBase;
+            } else {
+                // Passou de 1.5km: Cobra o excedente de KM + Tempo Total
+                // (Interpretação: O tempo também só é somado extra após sair da "zona básica")
+                let distCost = (totalDistance - 1.5) * activeKm;
+                let timeCost = (elapsedTime / 60) * config.priceMin;
+                currentFare = activeBase + distCost + timeCost;
             }
-
-            const timeCharge = (elapsedTime / 60) * config.priceMin;
-            
-            currentFare = activeBase + distCharge + timeCharge;
         }
 
         function updateDisplay() {
-            document.getElementById('displayPrice').innerText = `R$ ${currentFare.toFixed(2)}`;
+            if(!isRunning) {
+                // Se parado, mostra o valor da bandeirada atual
+                const base = currentFlag === 1 ? config.base1 : config.base2;
+                document.getElementById('displayPrice').innerText = `R$ ${base.toFixed(2)}`;
+            } else {
+                document.getElementById('displayPrice').innerText = `R$ ${currentFare.toFixed(2)}`;
+            }
             document.getElementById('displayDist').innerText = totalDistance.toFixed(1);
             document.getElementById('displayTime').innerText = formatTime(elapsedTime);
         }
 
-        // --- 4. SIMULADOR COM BUSCA ---
+        // --- 5. SIMULADOR COM ROTA ---
         function openSimulator() {
             document.getElementById('modalSimulator').style.display = 'flex';
             setTimeout(() => {
-                if(!simMap) {
-                    simMap = L.map('simMap').setView([-21.135, -44.261], 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(simMap);
-                    
-                    // Adiciona Busca
-                    L.Control.geocoder({
-                        defaultMarkGeocode: false
-                    }).on('markgeocode', function(e) {
-                        const latlng = e.geocode.center;
-                        addSimWaypoint(latlng);
-                        simMap.setView(latlng, 16);
-                    }).addTo(simMap);
+                // Pega local atual primeiro
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const myLat = pos.coords.latitude;
+                    const myLng = pos.coords.longitude;
 
-                    let waypoints = [];
-                    
-                    simMap.on('click', function(e) { addSimWaypoint(e.latlng); });
-
-                    function addSimWaypoint(latlng) {
-                        if(waypoints.length >= 2) { waypoints = []; if(routingControl) simMap.removeControl(routingControl); }
-                        waypoints.push(latlng);
+                    if(!simMap) {
+                        simMap = L.map('simMap').setView([myLat, myLng], 14);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(simMap);
                         
-                        if(waypoints.length === 1) {
-                            L.marker(latlng).addTo(simMap).bindPopup("Início").openPopup();
-                        } else if(waypoints.length === 2) {
+                        // Busca de Destino
+                        L.Control.geocoder({
+                            defaultMarkGeocode: false,
+                            placeholder: "Pesquise a rua destino..."
+                        }).on('markgeocode', function(e) {
+                            const destLatLng = e.geocode.center;
+                            lastSimAddress = e.geocode.name; // Salva nome da rua
+                            
+                            // Limpa rota anterior
+                            if(routingControl) simMap.removeControl(routingControl);
+                            
+                            // Traça Rota: De (Eu) Para (Pesquisa)
                             routingControl = L.Routing.control({
-                                waypoints: waypoints,
-                                createMarker: function() { return null; }, show: false
+                                waypoints: [
+                                    L.latLng(myLat, myLng),
+                                    destLatLng
+                                ],
+                                createMarker: function(i, wp) {
+                                    return L.marker(wp.latLng, {
+                                        icon: L.icon({
+                                            iconUrl: i===0 ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png' : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                                            iconSize: [25, 41], iconAnchor: [12, 41]
+                                        })
+                                    }).bindPopup(i===0 ? "Você" : "Destino");
+                                },
+                                show: false
                             }).on('routesfound', function(e) {
                                 const distKm = e.routes[0].summary.totalDistance / 1000;
                                 const timeMin = e.routes[0].summary.totalTime / 60;
                                 
-                                // Simulação (usando regra 1.5km)
+                                // Cálculo Estimado (Mesma regra 1.5km)
                                 const activeBase = currentFlag === 1 ? config.base1 : config.base2;
                                 const activeKm = currentFlag === 1 ? config.km1 : config.km2;
-                                let distCost = 0;
-                                if(distKm > 1.5) distCost = (distKm - 1.5) * activeKm;
-                                const estPrice = activeBase + distCost + (timeMin * config.priceMin);
+                                let estPrice = activeBase;
+                                if(distKm > 1.5) {
+                                    estPrice += (distKm - 1.5) * activeKm;
+                                    estPrice += timeMin * config.priceMin;
+                                }
 
                                 document.getElementById('simPrice').innerText = `R$ ${estPrice.toFixed(2)}`;
                                 document.getElementById('simDist').innerText = `${distKm.toFixed(1)} km | ${timeMin.toFixed(0)} min`;
                             }).addTo(simMap);
-                        }
+                            
+                            simMap.fitBounds(L.latLngBounds([L.latLng(myLat, myLng), destLatLng]));
+                        }).addTo(simMap);
+                        
+                        // Marcador do Motorista
+                        L.marker([myLat, myLng]).addTo(simMap).bindPopup("Você está aqui").openPopup();
+                    } else {
+                        simMap.setView([myLat, myLng], 14);
                     }
-                }
-                simMap.invalidateSize();
+                    simMap.invalidateSize();
+                });
             }, 300);
         }
 
-        // --- 5. CONFIGURAÇÕES ---
+        // --- 6. CONFIGURAÇÕES ---
         async function openSettings() {
             const { value: v } = await Swal.fire({
-                title: 'Configurações',
+                title: 'Ajustes',
                 html: `
                     <div class="config-grid">
                         <div class="config-item"><label>Bandeirada 1 (R$)</label><input id="s-b1" type="number" class="input-dark" value="${config.base1}"></div>
@@ -430,7 +498,7 @@
                         <div class="config-item"><label>Fim B2 (Hora)</label><input id="s-h2" type="number" class="input-dark" value="${config.autoEnd}"></div>
                     </div>
                 `,
-                confirmButtonText: 'SALVAR CONFIGURAÇÃO',
+                confirmButtonText: 'SALVAR E VOLTAR',
                 confirmButtonColor: '#22c55e',
                 showCancelButton: true,
                 focusConfirm: false,
@@ -446,10 +514,10 @@
                     }
                 }
             });
-            if (v) { config = v; localStorage.setItem('taxi_config_v2', JSON.stringify(config)); Swal.fire('Salvo!', '', 'success'); checkAutoFlag(); }
+            if (v) { config = v; localStorage.setItem('taxi_config_v3', JSON.stringify(config)); Swal.fire('Salvo!', '', 'success'); checkAutoFlag(); }
         }
 
-        // --- OUTROS ---
+        // --- 7. ADMIN ---
         function authAdmin() {
             if(document.getElementById('adminPass').value === 'sjdr2025') {
                 document.getElementById('adminLogin').style.display = 'none';
@@ -470,24 +538,33 @@
             });
         }
         function blockDriver(id) { if(confirm('Bloquear?')) { db.ref('drivers/'+id).remove(); loadDrivers(); } }
+
+        // --- 8. HISTÓRICO E EXTRAS ---
         function showHistory() {
             document.getElementById('modalHistory').style.display = 'flex';
             const list = document.getElementById('historyList');
             list.innerHTML = 'Carregando...';
-            db.ref('taxi_rides').limitToLast(15).once('value').then(snap => {
+            db.ref('taxi_rides').limitToLast(20).once('value').then(snap => {
                 list.innerHTML = '';
                 if(!snap.exists()) return list.innerHTML = 'Vazio.';
                 const arr = []; snap.forEach(c => arr.push(c.val()));
-                arr.reverse().forEach(r => list.innerHTML += `<div class="list-item" style="color:#ccc"><b>R$ ${r.val}</b><br>${r.date}<br>${r.dist}km | Band ${r.flag}</div>`);
+                arr.reverse().forEach(r => {
+                    // Tenta mostrar o destino, se não existir, mostra "Rota Local"
+                    const dest = r.dest || "Rota Local";
+                    list.innerHTML += `<div class="list-item" style="color:#ccc">
+                        <div style="display:flex; justify-content:space-between; color:white;"><b>R$ ${r.val}</b> <small>${r.date}</small></div>
+                        <div style="font-size:0.8rem; margin-top:5px;">📍 ${dest}</div>
+                        <div style="font-size:0.7rem; color:#64748b;">${r.dist}km | ${r.time} | Band ${r.flag}</div>
+                    </div>`;
+                });
             });
         }
         function clearHistory() { if(confirm('Apagar tudo?')) { db.ref('taxi_rides').remove(); document.getElementById('historyList').innerHTML = ''; } }
         function shareApp() { if(navigator.share) navigator.share({title: 'Taxímetro', url: window.location.href}); }
-        function shareRide(r) { 
-            const txt = `🚖 RECIBO\nValor: R$ ${r.val}\nDist: ${r.dist}km\nTempo: ${r.time}\nBandeira: ${r.flag}\nMot: ${r.driver}`; 
-            if(navigator.share) navigator.share({text: txt}); 
-        }
+        function shareRide(r) { const txt = `🚖 RECIBO\nValor: R$ ${r.val}\nDist: ${r.dist}km\nTempo: ${r.time}\nBandeira: ${r.flag}\nMot: ${r.driver}`; if(navigator.share) navigator.share({text: txt}); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openSettings() { openSettings(); } // Linkando a função
+        function openAdmin() { document.getElementById('modalAdmin').style.display = 'flex'; }
         function formatTime(s) { const m=Math.floor(s/60).toString().padStart(2,'0'); const sc=(s%60).toString().padStart(2,'0'); return `${m}:${sc}`; }
         function getDist(lat1, lon1, lat2, lon2) { const R=6371; const dLat=(lat2-lat1)*Math.PI/180; const dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); }
     </script>
