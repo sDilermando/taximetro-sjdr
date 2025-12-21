@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#121212">
-    <title>Taxímetro Livre</title>
+    <title>Taxímetro Gold V16</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
@@ -16,17 +16,14 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* --- ESTILO FIXO (NÃO MOVE) --- */
+        /* --- ESTILO BASE FIXO --- */
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         
         html, body {
-            margin: 0; padding: 0;
-            width: 100%; 
-            height: 100dvh; 
+            margin: 0; padding: 0; width: 100%; height: 100dvh; 
             background-color: #121212; color: white;
             font-family: 'Roboto', sans-serif;
-            overflow: hidden; 
-            position: fixed; 
+            overflow: hidden; position: fixed; 
         }
 
         #app-layout {
@@ -54,21 +51,25 @@
             overflow-y: auto;
         }
 
-        .valor-titulo { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        .valor-grande { font-size: 4.5rem; font-weight: 900; color: #00e676; line-height: 1; margin: 10px 0; }
+        .valor-titulo { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        /* Aumentei ainda mais o valor para destacar */
+        .valor-grande { font-size: 5rem; font-weight: 900; color: #00e676; line-height: 1; margin: 5px 0 20px 0; text-shadow: 0 0 20px rgba(0,230,118,0.2); }
         
         /* Bandeiras */
-        .box-bandeira { display: flex; gap: 8px; margin-top: 10px; background: #222; padding: 4px; border-radius: 30px; }
+        .box-bandeira { display: flex; gap: 8px; margin-bottom: 15px; background: #222; padding: 4px; border-radius: 30px; }
         .btn-band { background: transparent; border: none; color: #777; padding: 8px 20px; border-radius: 25px; font-weight: bold; font-size: 0.75rem; cursor: pointer; }
         .btn-band.ativo { background: #00e676; color: #000; }
         .btn-band.ativo2 { background: #ffea00; color: #000; }
-        .aviso-lock { font-size: 0.65rem; color: #ffea00; margin-top: 5px; display: none; }
+        .aviso-lock { font-size: 0.65rem; color: #ffea00; margin-bottom: 5px; display: none; }
 
-        /* Cards Info */
-        .info-cards { display: flex; gap: 10px; margin-top: 30px; width: 100%; justify-content: center; }
-        .card { background: #1e1e1e; padding: 10px; border-radius: 10px; text-align: center; flex: 1; border: 1px solid #333; }
-        .card-val { font-size: 1.1rem; font-weight: bold; }
-        .card-lbl { font-size: 0.55rem; color: #888; text-transform: uppercase; margin-top: 3px; }
+        /* Cards Info (Reduzidos conforme pedido) */
+        .info-cards { display: flex; gap: 10px; width: 90%; justify-content: center; }
+        .card { 
+            background: #1e1e1e; padding: 8px; /* Menos padding */
+            border-radius: 8px; text-align: center; flex: 1; border: 1px solid #333; 
+        }
+        .card-val { font-size: 0.95rem; font-weight: bold; color: #fff; } /* Fonte menor */
+        .card-lbl { font-size: 0.5rem; color: #888; text-transform: uppercase; margin-top: 2px; }
 
         /* 3. BOTÕES (FIXO) */
         .area-botoes {
@@ -96,10 +97,9 @@
         .btn-mini:active { transform: translateY(2px); box-shadow: none; }
         .amarelo { background: #ffea00; color: #000; box-shadow: 0 4px 0 #fbc02d; }
 
-        /* 4. MENU INFERIOR (DOCK) */
+        /* 4. MENU INFERIOR */
         footer {
-            flex: 0 0 auto;
-            padding-bottom: env(safe-area-inset-bottom);
+            flex: 0 0 auto; padding-bottom: env(safe-area-inset-bottom);
             background: #1e1e1e; border-top: 1px solid #333;
             display: grid; grid-template-columns: repeat(4, 1fr);
         }
@@ -133,10 +133,27 @@
         .config-item label { display: block; font-size: 0.65rem; color: #aaa; margin-bottom: 5px; }
         .config-item input { width: 100%; padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 5px; text-align: center; font-size: 0.9rem; }
 
-        /* Mapa */
-        .mapa-container { width: 100%; height: 60vh; background: #333; border-radius: 10px; margin-bottom: 10px; }
-        .leaflet-control-geocoder { width: 100%; }
-        .leaflet-control-geocoder input { color: black; }
+        /* MAPA E PESQUISA - CORREÇÃO DE LARGURA */
+        .mapa-container { width: 100%; height: 60vh; background: #333; border-radius: 10px; margin-bottom: 10px; position: relative; }
+        
+        /* Corrige a caixa de pesquisa para não vazar a tela */
+        .leaflet-control-geocoder { 
+            max-width: 65vw !important; /* Ocupa max 65% da tela */
+            min-width: 200px;
+            background: white; border-radius: 4px;
+        }
+        .leaflet-control-geocoder-form input { 
+            width: 100%; color: black; font-size: 14px; 
+        }
+        
+        /* Botão Microfone */
+        .mic-btn {
+            position: absolute; top: 10px; right: 10px; z-index: 999;
+            background: white; border: 2px solid #ccc; border-radius: 4px;
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+        }
+        .mic-btn:active { background: #eee; }
 
     </style>
 </head>
@@ -240,7 +257,12 @@
 <div id="modSim" class="modal-fundo">
     <div class="modal-janela">
         <div class="modal-topo"><span class="modal-titulo">Simulador</span><button class="fechar" onclick="fecharModal('modSim')">×</button></div>
-        <div id="mapaSim" class="mapa-container"></div>
+        <div style="position:relative;">
+            <div id="mapaSim" class="mapa-container"></div>
+            <button class="mic-btn" onclick="iniciarVoz()" title="Falar Endereço">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#333"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+            </button>
+        </div>
         <div style="text-align:center; background:#111; padding:10px; border-radius:10px;">
             <div style="font-size:0.7rem; color:#aaa;">ESTIMATIVA</div>
             <div id="simValor" style="font-size:1.5rem; font-weight:bold; color:#00e676;">R$ 0,00</div>
@@ -276,13 +298,13 @@
     const db = firebase.database();
 
     // VARS
-    let configs = JSON.parse(localStorage.getItem('taxi_cfg_15')) || { 
+    let configs = JSON.parse(localStorage.getItem('taxi_cfg_16')) || { 
         b1:6, k1:3.5, m1:0.5, 
         b2:8, k2:4.5, m2:0.8,
         h1:22, h2:6, auto:true 
     };
     let corrida = { on:false, pause:false, dist:0, tempo:0, valor:0, flag:1, manual:false };
-    let timer, watch, lastPos, mapSim, rotaCtrl;
+    let timer, watch, lastPos, mapSim, rotaCtrl, geocoderCtrl;
 
     window.onload = () => {
         setInterval(() => { document.getElementById('relogio').innerText = new Date().toLocaleTimeString(); }, 1000);
@@ -427,7 +449,7 @@
             b2: parseFloat(document.getElementById('inp_b2').value), k2: parseFloat(document.getElementById('inp_k2').value), m2: parseFloat(document.getElementById('inp_m2').value),
             h1: parseInt(document.getElementById('inp_h1').value), h2: parseInt(document.getElementById('inp_h2').value)
         };
-        localStorage.setItem('taxi_cfg_15', JSON.stringify(configs));
+        localStorage.setItem('taxi_cfg_16', JSON.stringify(configs));
         fecharModal('modAjustes');
         checkFlagAuto();
         Swal.fire('Salvo!', '', 'success');
@@ -439,7 +461,9 @@
             if(!mapSim) {
                 mapSim = L.map('mapaSim').setView([-21, -44], 13);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapSim);
-                L.Control.geocoder({ defaultMarkGeocode: false, placeholder:'Destino...' }).on('markgeocode', function(e) { rota(e.geocode.center); }).addTo(mapSim);
+                // Inicializa o geocoder
+                geocoderCtrl = L.Control.geocoder({ defaultMarkGeocode: false, placeholder:'Destino...' })
+                .on('markgeocode', function(e) { rota(e.geocode.center); }).addTo(mapSim);
             }
             mapSim.invalidateSize();
             navigator.geolocation.getCurrentPosition(p => {
@@ -449,6 +473,43 @@
             });
         }, 300);
     }
+
+    // --- FUNÇÃO DE VOZ ---
+    function iniciarVoz() {
+        if (!('webkitSpeechRecognition' in window)) return alert("Seu navegador não suporta voz.");
+        
+        const rec = new webkitSpeechRecognition();
+        rec.lang = 'pt-BR';
+        rec.start();
+
+        rec.onresult = function(e) {
+            const fala = e.results[0][0].transcript;
+            Swal.fire({
+                title: 'Buscando...',
+                text: fala,
+                timer: 1500, showConfirmButton: false
+            });
+            // Tenta injetar no geocoder
+            const input = document.querySelector('.leaflet-control-geocoder-form input');
+            if(input) {
+                input.value = fala;
+                // Simula enter ou dispara busca (tentativa)
+                // Como é complexo disparar o evento interno do plugin, vamos alertar o usuário para confirmar
+                // Mas o plugin geralmente escuta eventos de teclado.
+                // Fallback: usar o geocoder manualmente
+                geocoderCtrl.options.geocoder.geocode(fala, function(results) {
+                    if (results && results.length > 0) {
+                        rota(results[0].center);
+                        mapSim.fitBounds(results[0].bbox);
+                    } else {
+                        alert("Endereço não encontrado.");
+                    }
+                });
+            }
+        };
+        rec.onerror = function() { alert("Erro ao ouvir."); };
+    }
+
     function rota(dest) {
         if(!mapSim.myPos) return;
         if(rotaCtrl) mapSim.removeControl(rotaCtrl);
