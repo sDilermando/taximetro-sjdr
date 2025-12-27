@@ -3,82 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Taxímetro GPS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>CYBER TAXI | GPS</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        :root { --neons: #00ff88; --dark: #111; --gray: #222; }
-        body { background: var(--dark); color: white; font-family: 'Roboto', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --bg-color: #050505;
+            --glass: rgba(0, 243, 255, 0.05);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            text-transform: uppercase;
+        }
+
+        /* EFEITO CRT (SCANLINE) */
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
 
         /* HEADER CONFIG */
-        .config-bar { background: var(--gray); padding: 15px; display: flex; gap: 10px; border-bottom: 1px solid #333; }
-        .input-group { flex: 1; }
-        .input-group label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 5px; }
-        .input-conf { width: 100%; background: #000; border: 1px solid #444; color: var(--neons); padding: 8px; border-radius: 5px; font-weight: bold; text-align: center; font-size: 1rem; }
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 2px solid var(--neon-blue);
+            background: var(--glass);
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+        
+        .input-hud {
+            background: black;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            padding: 5px;
+            width: 80px;
+            text-align: center;
+            font-size: 1rem;
+            outline: none;
+        }
+        .input-label { font-size: 0.6rem; letter-spacing: 2px; color: var(--neon-pink); }
 
-        /* MOSTRADOR */
-        .display-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .label-total { font-size: 1rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
-        .value-total { font-size: 5rem; font-weight: 900; color: white; margin: 10px 0; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
-        .info-row { display: flex; gap: 30px; margin-top: 20px; }
-        .info-box { text-align: center; }
-        .info-val { font-size: 1.5rem; font-weight: 700; color: #ccc; }
-        .info-lbl { font-size: 0.7rem; color: #666; }
+        /* MOSTRADOR PRINCIPAL */
+        .main-display {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
 
-        /* STATUS */
-        .status-badge { background: #333; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 20px; color: #888; }
-        .running { background: rgba(0, 255, 136, 0.2); color: var(--neons); border: 1px solid var(--neons); }
+        .price-box {
+            text-align: center;
+            border: 2px solid var(--neon-blue);
+            padding: 20px 40px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.8);
+            box-shadow: 0 0 20px var(--neon-blue), inset 0 0 20px var(--neon-blue);
+            position: relative;
+        }
+        
+        .currency { font-size: 1.5rem; vertical-align: top; }
+        .big-price { font-size: 4.5rem; font-weight: 900; text-shadow: 0 0 10px var(--neon-blue); }
+        .label-status { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: black; padding: 0 10px; font-size: 0.8rem; color: var(--neon-pink); letter-spacing: 3px; }
 
-        /* CONTROLES */
-        .controls { padding: 20px; display: flex; gap: 10px; background: var(--gray); }
-        .btn { flex: 1; padding: 20px; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
-        .btn-start { background: var(--neons); color: black; }
-        .btn-stop { background: #ff3333; color: white; display: none; }
-        .btn-reset { background: #444; color: white; }
+        /* STATUS GPS */
+        .gps-status {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .led { width: 12px; height: 12px; background: #333; border-radius: 50%; box-shadow: 0 0 5px #000; }
+        .led.on { background: #0f0; box-shadow: 0 0 10px #0f0; animation: blink 1s infinite; }
+        @keyframes blink { 0% {opacity:1;} 50% {opacity:0.3;} 100% {opacity:1;} }
 
-        /* ANIMAÇÃO PULSO */
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-        .gps-dot { width: 10px; height: 10px; background: red; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .gps-active { background: var(--neons); animation: pulse 1s infinite; }
+        /* INFO DATA */
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 90%;
+            margin-bottom: 20px;
+        }
+        .data-card {
+            border-left: 3px solid var(--neon-pink);
+            background: linear-gradient(90deg, rgba(255,0,255,0.1), transparent);
+            padding: 10px;
+        }
+        .data-val { font-size: 1.5rem; font-weight: bold; }
+        .data-lbl { font-size: 0.7rem; opacity: 0.7; }
+
+        /* CONTROLS */
+        .control-panel {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 15px;
+            z-index: 10;
+        }
+        
+        .btn {
+            background: transparent;
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            padding: 15px;
+            cursor: pointer;
+            text-shadow: 0 0 5px var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            transition: 0.2s;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        
+        .btn:active { transform: scale(0.98); background: var(--neon-blue); color: black; }
+        .btn-start { border-color: #0f0; color: #0f0; }
+        .btn-stop { border-color: #f00; color: #f00; display: none; }
+        .btn-reset { border-color: var(--neon-pink); color: var(--neon-pink); font-size: 1rem; }
+
     </style>
 </head>
 <body>
 
-    <div class="config-bar">
-        <div class="input-group">
-            <label>BANDEIRADA (R$)</label>
-            <input type="number" id="base-price" class="input-conf" value="5.00">
+    <div class="hud-header">
+        <div>
+            <div class="input-label">BANDEIRADA</div>
+            <input type="number" id="base-price" class="input-hud" value="5.00">
         </div>
-        <div class="input-group">
-            <label>PREÇO/KM (R$)</label>
-            <input type="number" id="km-price" class="input-conf" value="2.50">
-        </div>
-    </div>
-
-    <div class="display-area">
-        <div id="gps-status" class="status-badge"><span class="gps-dot"></span> AGUARDANDO GPS</div>
-        
-        <div class="label-total">Valor a Pagar</div>
-        <div class="value-total">R$ <span id="display-money">0.00</span></div>
-
-        <div class="info-row">
-            <div class="info-box">
-                <div class="info-val"><span id="display-dist">0.0</span> km</div>
-                <div class="info-lbl">DISTÂNCIA</div>
-            </div>
-            <div class="info-box">
-                <div class="info-val" id="display-time">00:00</div>
-                <div class="info-lbl">DURAÇÃO</div>
-            </div>
+        <div style="text-align:right;">
+            <div class="input-label">R$ / KM</div>
+            <input type="number" id="km-price" class="input-hud" value="2.50">
         </div>
     </div>
 
-    <div class="controls">
-        <button class="btn btn-reset" onclick="resetRide()"><i class="fas fa-trash"></i></button>
-        <button class="btn btn-start" id="btn-start" onclick="toggleRide()">INICIAR</button>
-        <button class="btn btn-stop" id="btn-stop" onclick="toggleRide()">PARAR</button>
+    <div class="main-display">
+        <div class="price-box">
+            <div class="label-status" id="sys-status">SISTEMA PRONTO</div>
+            <span class="currency">R$</span>
+            <span class="big-price" id="display-money">0.00</span>
+        </div>
+
+        <div class="gps-status">
+            <div class="led" id="gps-led"></div>
+            <span id="gps-text">BUSCANDO SATÉLITE...</span>
+        </div>
+    </div>
+
+    <div class="center-content" style="display:flex; justify-content:center;">
+        <div class="data-grid">
+            <div class="data-card">
+                <div class="data-val" id="display-dist">0.0</div>
+                <div class="data-lbl">DISTÂNCIA (KM)</div>
+            </div>
+            <div class="data-card" style="text-align:right; border-left:none; border-right:3px solid var(--neon-pink); background: linear-gradient(-90deg, rgba(255,0,255,0.1), transparent);">
+                <div class="data-val" id="display-time">00:00</div>
+                <div class="data-lbl">TEMPO DE CORRIDA</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <button class="btn btn-reset" onclick="resetSystem()">RESET</button>
+        <button class="btn btn-start" id="btn-start" onclick="toggleEngine()">INICIAR</button>
+        <button class="btn btn-stop" id="btn-stop" onclick="toggleEngine()">ENCERRAR</button>
     </div>
 
     <script>
@@ -92,41 +206,45 @@
         let lastLng = null;
         let priceTotal = 0;
 
-        // Configura GPS
+        // Efeito Sonoro (Beep)
+        const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'); // Placeholder silencioso
+
+        // Inicializa GPS
         navigator.geolocation.watchPosition((p) => {
-            const dot = document.querySelector('.gps-dot');
-            dot.classList.add('gps-active');
-            dot.style.background = '#00ff88';
-            document.getElementById('gps-status').innerHTML = '<span class="gps-dot gps-active"></span> GPS CONECTADO';
+            document.getElementById('gps-led').classList.add('on');
+            document.getElementById('gps-text').innerText = "GPS CONECTADO";
+            document.getElementById('gps-text').style.color = "#0f0";
         }, (err) => {
-            console.error(err);
+            console.log(err);
         }, { enableHighAccuracy: true });
 
-        function toggleRide() {
+        function toggleEngine() {
             if(!running) {
-                // INICIAR
+                // START
                 const base = parseFloat(document.getElementById('base-price').value);
-                if(!base) return Swal.fire('Erro', 'Configure a bandeirada.', 'error');
+                if(!base) return;
 
                 running = true;
                 startTime = Date.now();
                 priceTotal = base;
                 
-                // Trava inputs
-                document.querySelectorAll('.input-conf').forEach(i => i.disabled = true);
-                
-                // UI
+                // Trava Inputs
+                document.getElementById('base-price').disabled = true;
+                document.getElementById('km-price').disabled = true;
+
+                // UI Updates
                 document.getElementById('btn-start').style.display = 'none';
                 document.getElementById('btn-stop').style.display = 'block';
+                document.getElementById('sys-status').innerText = "EM CURSO";
+                document.getElementById('sys-status').style.color = "#0f0";
                 document.getElementById('display-money').innerText = base.toFixed(2);
-                document.querySelector('.value-total').style.color = '#00ff88';
-
-                // Timer
-                timerInterval = setInterval(updateTime, 1000);
+                
+                // Timer Loop
+                timerInterval = setInterval(updateTimer, 1000);
 
                 // GPS Tracking
                 if (navigator.geolocation) {
-                    watchId = navigator.geolocation.watchPosition(processPosition, null, {
+                    watchId = navigator.geolocation.watchPosition(processLocation, null, {
                         enableHighAccuracy: true,
                         maximumAge: 1000,
                         timeout: 5000
@@ -134,40 +252,40 @@
                 }
 
             } else {
-                // PARAR
+                // STOP
                 running = false;
                 clearInterval(timerInterval);
                 navigator.geolocation.clearWatch(watchId);
-                lastLat = null; lastLng = null;
-
-                // UI
+                
+                // UI Updates
                 document.getElementById('btn-start').style.display = 'block';
                 document.getElementById('btn-stop').style.display = 'none';
-                document.getElementById('btn-start').innerText = 'CONTINUAR';
-                document.querySelector('.value-total').style.color = 'white';
+                document.getElementById('btn-start').innerText = "RETOMAR";
+                document.getElementById('sys-status').innerText = "FINALIZADO";
+                document.getElementById('sys-status').style.color = "red";
                 
-                // Finalizar
-                checkout();
+                lastLat = null; lastLng = null;
+                
+                generateReceipt();
             }
         }
 
-        function processPosition(position) {
+        function processLocation(position) {
             if (!running) return;
 
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             const accuracy = position.coords.accuracy;
 
-            // Ignora sinal ruim (>20m erro)
-            if (accuracy > 20) return;
+            if (accuracy > 25) return; // Ignora GPS ruim
 
             if (lastLat != null) {
                 const km = getDistanceFromLatLonInKm(lastLat, lastLng, lat, lng);
                 
-                // Filtro de ruído (só conta se moveu > 5 metros)
+                // Filtro para evitar "pulos" de GPS parado (min 5 metros)
                 if (km > 0.005) {
                     totalDist += km;
-                    updateCost();
+                    updatePrice();
                     lastLat = lat;
                     lastLng = lng;
                 }
@@ -177,18 +295,16 @@
             }
         }
 
-        function updateCost() {
+        function updatePrice() {
             const kmPrice = parseFloat(document.getElementById('km-price').value);
             const basePrice = parseFloat(document.getElementById('base-price').value);
-            
-            // Cálculo: Bandeirada + (Km * Preço/Km)
             priceTotal = basePrice + (totalDist * kmPrice);
             
             document.getElementById('display-money').innerText = priceTotal.toFixed(2);
             document.getElementById('display-dist').innerText = totalDist.toFixed(1);
         }
 
-        function updateTime() {
+        function updateTimer() {
             const diff = Date.now() - startTime;
             const sec = Math.floor((diff / 1000) % 60);
             const min = Math.floor((diff / (1000 * 60)) % 60);
@@ -198,7 +314,7 @@
                 `${hrs > 0 ? hrs+':' : ''}${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
         }
 
-        function resetRide() {
+        function resetSystem() {
             if(running) return;
             totalDist = 0;
             priceTotal = 0;
@@ -208,43 +324,48 @@
             document.getElementById('display-money').innerText = "0.00";
             document.getElementById('display-dist').innerText = "0.0";
             document.getElementById('display-time').innerText = "00:00";
+            document.getElementById('sys-status').innerText = "SISTEMA PRONTO";
+            document.getElementById('sys-status').style.color = "var(--neon-pink)";
             document.getElementById('btn-start').innerText = "INICIAR";
-            document.querySelectorAll('.input-conf').forEach(i => i.disabled = false);
+            
+            document.getElementById('base-price').disabled = false;
+            document.getElementById('km-price').disabled = false;
         }
 
-        function checkout() {
+        function generateReceipt() {
             Swal.fire({
-                title: 'Corrida Finalizada',
+                title: 'MISSÃO CUMPRIDA',
+                background: '#000',
+                color: '#00f3ff',
                 html: `
-                    Total: <b>R$ ${priceTotal.toFixed(2)}</b><br>
-                    Distância: ${totalDist.toFixed(1)} km
+                    <div style="text-align:left; border:1px solid #00f3ff; padding:10px; font-family:'Orbitron'">
+                        TOTAL: <b style="font-size:1.5rem">R$ ${priceTotal.toFixed(2)}</b><br>
+                        DIST: ${totalDist.toFixed(1)} KM<br>
+                        TEMPO: ${document.getElementById('display-time').innerText}
+                    </div>
                 `,
-                icon: 'success',
-                confirmButtonText: '<i class="fab fa-whatsapp"></i> Enviar Cobrança',
-                confirmButtonColor: '#25D366',
+                confirmButtonText: 'ENVIAR COBRANÇA',
+                confirmButtonColor: '#00f3ff',
                 showCancelButton: true,
-                cancelButtonText: 'Fechar'
+                cancelButtonColor: '#ff00ff'
             }).then((res) => {
                 if(res.isConfirmed) {
-                    const msg = `🚖 *RESUMO DA CORRIDA*%0A%0A💰 Valor: R$ ${priceTotal.toFixed(2)}%0A📏 Distância: ${totalDist.toFixed(1)} km%0A⏱️ Tempo: ${document.getElementById('display-time').innerText}`;
+                    const msg = `🚀 *TAXI LOG*%0A%0A💰 R$ ${priceTotal.toFixed(2)}%0A📍 ${totalDist.toFixed(1)} KM%0A⏱️ ${document.getElementById('display-time').innerText}`;
                     window.open(`https://wa.me/?text=${msg}`, '_blank');
                 }
             });
         }
 
-        // Haversine Formula (Cálculo Preciso de Distância)
+        // Math Core
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371; 
             var dLat = deg2rad(lat2-lat1); 
             var dLon = deg2rad(lon2-lon1); 
-            var a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
             var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
             var d = R * c; 
             return d;
         }
-
         function deg2rad(deg) { return deg * (Math.PI/180); }
     </script>
 </body>
