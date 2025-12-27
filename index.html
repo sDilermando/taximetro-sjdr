@@ -1,372 +1,253 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CYBER TAXI | GPS</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<meta charset="UTF-8">
+<title>Taxímetro Digital</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        :root {
-            --neon-blue: #00f3ff;
-            --neon-pink: #ff00ff;
-            --bg-color: #050505;
-            --glass: rgba(0, 243, 255, 0.05);
-        }
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
-        body {
-            background-color: var(--bg-color);
-            background-image: 
-                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-            background-size: 20px 20px;
-            color: var(--neon-blue);
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            text-transform: uppercase;
-        }
-
-        /* EFEITO CRT (SCANLINE) */
-        body::after {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        /* HEADER CONFIG */
-        .hud-header {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px;
-            border-bottom: 2px solid var(--neon-blue);
-            background: var(--glass);
-            box-shadow: 0 0 15px var(--neon-blue);
-        }
-        
-        .input-hud {
-            background: black;
-            border: 1px solid var(--neon-blue);
-            color: var(--neon-blue);
-            font-family: 'Orbitron', sans-serif;
-            padding: 5px;
-            width: 80px;
-            text-align: center;
-            font-size: 1rem;
-            outline: none;
-        }
-        .input-label { font-size: 0.6rem; letter-spacing: 2px; color: var(--neon-pink); }
-
-        /* MOSTRADOR PRINCIPAL */
-        .main-display {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .price-box {
-            text-align: center;
-            border: 2px solid var(--neon-blue);
-            padding: 20px 40px;
-            border-radius: 10px;
-            background: rgba(0,0,0,0.8);
-            box-shadow: 0 0 20px var(--neon-blue), inset 0 0 20px var(--neon-blue);
-            position: relative;
-        }
-        
-        .currency { font-size: 1.5rem; vertical-align: top; }
-        .big-price { font-size: 4.5rem; font-weight: 900; text-shadow: 0 0 10px var(--neon-blue); }
-        .label-status { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: black; padding: 0 10px; font-size: 0.8rem; color: var(--neon-pink); letter-spacing: 3px; }
-
-        /* STATUS GPS */
-        .gps-status {
-            margin-top: 30px;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .led { width: 12px; height: 12px; background: #333; border-radius: 50%; box-shadow: 0 0 5px #000; }
-        .led.on { background: #0f0; box-shadow: 0 0 10px #0f0; animation: blink 1s infinite; }
-        @keyframes blink { 0% {opacity:1;} 50% {opacity:0.3;} 100% {opacity:1;} }
-
-        /* INFO DATA */
-        .data-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            width: 90%;
-            margin-bottom: 20px;
-        }
-        .data-card {
-            border-left: 3px solid var(--neon-pink);
-            background: linear-gradient(90deg, rgba(255,0,255,0.1), transparent);
-            padding: 10px;
-        }
-        .data-val { font-size: 1.5rem; font-weight: bold; }
-        .data-lbl { font-size: 0.7rem; opacity: 0.7; }
-
-        /* CONTROLS */
-        .control-panel {
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 3fr;
-            gap: 15px;
-            z-index: 10;
-        }
-        
-        .btn {
-            background: transparent;
-            border: 2px solid var(--neon-blue);
-            color: var(--neon-blue);
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
-            padding: 15px;
-            cursor: pointer;
-            text-shadow: 0 0 5px var(--neon-blue);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-            transition: 0.2s;
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-        }
-        
-        .btn:active { transform: scale(0.98); background: var(--neon-blue); color: black; }
-        .btn-start { border-color: #0f0; color: #0f0; }
-        .btn-stop { border-color: #f00; color: #f00; display: none; }
-        .btn-reset { border-color: var(--neon-pink); color: var(--neon-pink); font-size: 1rem; }
-
-    </style>
+<style>
+body{
+  margin:0;
+  background:#0c0f14;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color:#eaeaea;
+}
+header{
+  background:#111726;
+  text-align:center;
+  padding:14px;
+  font-size:20px;
+  letter-spacing:1px;
+}
+.container{
+  max-width:600px;
+  margin:auto;
+  padding:12px;
+}
+.panel{
+  background:#151c2e;
+  border-radius:14px;
+  padding:15px;
+  margin-bottom:12px;
+}
+.display{
+  font-size:34px;
+  text-align:center;
+  font-weight:bold;
+  color:#00f5a0;
+}
+.info{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  margin-top:8px;
+}
+button{
+  width:100%;
+  padding:14px;
+  margin-top:8px;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:bold;
+}
+.start{background:#00f5a0;}
+.pause{background:#2c3558;color:#fff;}
+.stop{background:#ff3b3b;color:#fff;}
+.config input, .config select{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  border-radius:8px;
+  border:none;
+  background:#1e2640;
+  color:#fff;
+}
+label{font-size:13px;}
+.row{
+  display:flex;
+  gap:8px;
+}
+#map{height:260px;border-radius:12px;}
+.small{font-size:12px;opacity:.8;text-align:center;}
+</style>
 </head>
+
 <body>
 
-    <div class="hud-header">
-        <div>
-            <div class="input-label">BANDEIRADA</div>
-            <input type="number" id="base-price" class="input-hud" value="5.00">
-        </div>
-        <div style="text-align:right;">
-            <div class="input-label">R$ / KM</div>
-            <input type="number" id="km-price" class="input-hud" value="2.50">
-        </div>
-    </div>
+<header>🚕 TAXÍMETRO DIGITAL</header>
 
-    <div class="main-display">
-        <div class="price-box">
-            <div class="label-status" id="sys-status">SISTEMA PRONTO</div>
-            <span class="currency">R$</span>
-            <span class="big-price" id="display-money">0.00</span>
-        </div>
+<div class="container">
 
-        <div class="gps-status">
-            <div class="led" id="gps-led"></div>
-            <span id="gps-text">BUSCANDO SATÉLITE...</span>
-        </div>
-    </div>
+<div class="panel">
+  <div class="display">R$ <span id="valor">0.00</span></div>
+  <div class="info">
+    <span>Dist: <span id="dist">0.00</span> km</span>
+    <span>Tempo: <span id="tempo">0</span> min</span>
+    <span>Bandeira <span id="bandeira">1</span></span>
+  </div>
+</div>
 
-    <div class="center-content" style="display:flex; justify-content:center;">
-        <div class="data-grid">
-            <div class="data-card">
-                <div class="data-val" id="display-dist">0.0</div>
-                <div class="data-lbl">DISTÂNCIA (KM)</div>
-            </div>
-            <div class="data-card" style="text-align:right; border-left:none; border-right:3px solid var(--neon-pink); background: linear-gradient(-90deg, rgba(255,0,255,0.1), transparent);">
-                <div class="data-val" id="display-time">00:00</div>
-                <div class="data-lbl">TEMPO DE CORRIDA</div>
-            </div>
-        </div>
-    </div>
+<div class="panel row">
+  <button class="start" onclick="iniciar()">INICIAR</button>
+  <button class="pause" onclick="pausar()">PAUSAR</button>
+  <button class="stop" onclick="encerrar()">ENCERRAR</button>
+</div>
 
-    <div class="control-panel">
-        <button class="btn btn-reset" onclick="resetSystem()">RESET</button>
-        <button class="btn btn-start" id="btn-start" onclick="toggleEngine()">INICIAR</button>
-        <button class="btn btn-stop" id="btn-stop" onclick="toggleEngine()">ENCERRAR</button>
-    </div>
+<div class="panel config">
+<h3>Configuração</h3>
 
-    <script>
-        let running = false;
-        let watchId = null;
-        let startTime = null;
-        let timerInterval = null;
-        
-        let totalDist = 0;
-        let lastLat = null;
-        let lastLng = null;
-        let priceTotal = 0;
+<label>Bandeirada (R$)</label>
+<input id="banderada" type="number" step="0.01">
 
-        // Efeito Sonoro (Beep)
-        const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'); // Placeholder silencioso
+<label>B1 – R$/km</label>
+<input id="b1_km" type="number" step="0.01">
 
-        // Inicializa GPS
-        navigator.geolocation.watchPosition((p) => {
-            document.getElementById('gps-led').classList.add('on');
-            document.getElementById('gps-text').innerText = "GPS CONECTADO";
-            document.getElementById('gps-text').style.color = "#0f0";
-        }, (err) => {
-            console.log(err);
-        }, { enableHighAccuracy: true });
+<label>B1 – R$/min</label>
+<input id="b1_min" type="number" step="0.01">
 
-        function toggleEngine() {
-            if(!running) {
-                // START
-                const base = parseFloat(document.getElementById('base-price').value);
-                if(!base) return;
+<label>B2 – R$/km</label>
+<input id="b2_km" type="number" step="0.01">
 
-                running = true;
-                startTime = Date.now();
-                priceTotal = base;
-                
-                // Trava Inputs
-                document.getElementById('base-price').disabled = true;
-                document.getElementById('km-price').disabled = true;
+<label>B2 – R$/min</label>
+<input id="b2_min" type="number" step="0.01">
 
-                // UI Updates
-                document.getElementById('btn-start').style.display = 'none';
-                document.getElementById('btn-stop').style.display = 'block';
-                document.getElementById('sys-status').innerText = "EM CURSO";
-                document.getElementById('sys-status').style.color = "#0f0";
-                document.getElementById('display-money').innerText = base.toFixed(2);
-                
-                // Timer Loop
-                timerInterval = setInterval(updateTimer, 1000);
+<label>Bandeira 2</label>
+<select id="modoB2">
+  <option value="auto">Automática (22h–6h)</option>
+  <option value="manual">Manual</option>
+</select>
 
-                // GPS Tracking
-                if (navigator.geolocation) {
-                    watchId = navigator.geolocation.watchPosition(processLocation, null, {
-                        enableHighAccuracy: true,
-                        maximumAge: 1000,
-                        timeout: 5000
-                    });
-                }
+<button onclick="salvar()">Salvar</button>
+</div>
 
-            } else {
-                // STOP
-                running = false;
-                clearInterval(timerInterval);
-                navigator.geolocation.clearWatch(watchId);
-                
-                // UI Updates
-                document.getElementById('btn-start').style.display = 'block';
-                document.getElementById('btn-stop').style.display = 'none';
-                document.getElementById('btn-start').innerText = "RETOMAR";
-                document.getElementById('sys-status').innerText = "FINALIZADO";
-                document.getElementById('sys-status').style.color = "red";
-                
-                lastLat = null; lastLng = null;
-                
-                generateReceipt();
-            }
-        }
+<div class="panel">
+<h3>Destino & Prévia</h3>
+<input id="destino" placeholder="Pesquisar destino">
+<button onclick="buscar()">Buscar</button>
+<div id="map"></div>
+<div class="small">Estimativa: R$ <span id="previa">0.00</span></div>
+</div>
 
-        function processLocation(position) {
-            if (!running) return;
+</div>
 
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const accuracy = position.coords.accuracy;
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+let cfg={
+  banderada:5,
+  b1_km:2.5,b1_min:0.5,
+  b2_km:3.5,b2_min:0.7
+};
 
-            if (accuracy > 25) return; // Ignora GPS ruim
+let rodando=false, pausado=false;
+let inicio, ultimo;
+let dist=0, valor=0;
+let latA, lonA;
+let map, mark;
 
-            if (lastLat != null) {
-                const km = getDistanceFromLatLonInKm(lastLat, lastLng, lat, lng);
-                
-                // Filtro para evitar "pulos" de GPS parado (min 5 metros)
-                if (km > 0.005) {
-                    totalDist += km;
-                    updatePrice();
-                    lastLat = lat;
-                    lastLng = lng;
-                }
-            } else {
-                lastLat = lat;
-                lastLng = lng;
-            }
-        }
+function salvar(){
+  cfg={
+    banderada:+banderada.value,
+    b1_km:+b1_km.value,b1_min:+b1_min.value,
+    b2_km:+b2_km.value,b2_min:+b2_min.value
+  };
+  localStorage.setItem("cfgTaxi",JSON.stringify(cfg));
+  alert("Configuração salva");
+}
 
-        function updatePrice() {
-            const kmPrice = parseFloat(document.getElementById('km-price').value);
-            const basePrice = parseFloat(document.getElementById('base-price').value);
-            priceTotal = basePrice + (totalDist * kmPrice);
-            
-            document.getElementById('display-money').innerText = priceTotal.toFixed(2);
-            document.getElementById('display-dist').innerText = totalDist.toFixed(1);
-        }
+(function carregar(){
+  let d=localStorage.getItem("cfgTaxi");
+  if(d)cfg=JSON.parse(d);
+  banderada.value=cfg.banderada;
+  b1_km.value=cfg.b1_km;
+  b1_min.value=cfg.b1_min;
+  b2_km.value=cfg.b2_km;
+  b2_min.value=cfg.b2_min;
+})();
 
-        function updateTimer() {
-            const diff = Date.now() - startTime;
-            const sec = Math.floor((diff / 1000) % 60);
-            const min = Math.floor((diff / (1000 * 60)) % 60);
-            const hrs = Math.floor((diff / (1000 * 60 * 60)));
-            
-            document.getElementById('display-time').innerText = 
-                `${hrs > 0 ? hrs+':' : ''}${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
-        }
+function bandeira(){
+  if(modoB2.value==="manual")return 2;
+  let h=new Date().getHours();
+  return(h>=22||h<6)?2:1;
+}
 
-        function resetSystem() {
-            if(running) return;
-            totalDist = 0;
-            priceTotal = 0;
-            startTime = null;
-            lastLat = null; lastLng = null;
-            
-            document.getElementById('display-money').innerText = "0.00";
-            document.getElementById('display-dist').innerText = "0.0";
-            document.getElementById('display-time').innerText = "00:00";
-            document.getElementById('sys-status').innerText = "SISTEMA PRONTO";
-            document.getElementById('sys-status').style.color = "var(--neon-pink)";
-            document.getElementById('btn-start').innerText = "INICIAR";
-            
-            document.getElementById('base-price').disabled = false;
-            document.getElementById('km-price').disabled = false;
-        }
+function iniciar(){
+  if(rodando)return;
+  rodando=true; pausado=false;
+  inicio=Date.now(); ultimo=inicio;
+  valor=cfg.banderada;
+  navigator.geolocation.watchPosition(p=>{
+    if(!rodando||pausado)return;
+    let {latitude,longitude}=p.coords;
+    if(latA){
+      dist+=calc(latA,lonA,latitude,longitude);
+    }
+    latA=latitude; lonA=longitude;
+  });
+}
 
-        function generateReceipt() {
-            Swal.fire({
-                title: 'MISSÃO CUMPRIDA',
-                background: '#000',
-                color: '#00f3ff',
-                html: `
-                    <div style="text-align:left; border:1px solid #00f3ff; padding:10px; font-family:'Orbitron'">
-                        TOTAL: <b style="font-size:1.5rem">R$ ${priceTotal.toFixed(2)}</b><br>
-                        DIST: ${totalDist.toFixed(1)} KM<br>
-                        TEMPO: ${document.getElementById('display-time').innerText}
-                    </div>
-                `,
-                confirmButtonText: 'ENVIAR COBRANÇA',
-                confirmButtonColor: '#00f3ff',
-                showCancelButton: true,
-                cancelButtonColor: '#ff00ff'
-            }).then((res) => {
-                if(res.isConfirmed) {
-                    const msg = `🚀 *TAXI LOG*%0A%0A💰 R$ ${priceTotal.toFixed(2)}%0A📍 ${totalDist.toFixed(1)} KM%0A⏱️ ${document.getElementById('display-time').innerText}`;
-                    window.open(`https://wa.me/?text=${msg}`, '_blank');
-                }
-            });
-        }
+function pausar(){pausado=!pausado;}
 
-        // Math Core
-        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            var R = 6371; 
-            var dLat = deg2rad(lat2-lat1); 
-            var dLon = deg2rad(lon2-lon1); 
-            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-            var d = R * c; 
-            return d;
-        }
-        function deg2rad(deg) { return deg * (Math.PI/180); }
-    </script>
+function encerrar(){
+  rodando=false; pausado=false;
+  latA=null;
+  alert("Total da corrida: R$ "+valor.toFixed(2));
+}
+
+setInterval(()=>{
+  if(!rodando||pausado)return;
+  let agora=Date.now();
+  let min=(agora-ultimo)/60000;
+  ultimo=agora;
+
+  let b=bandeira();
+  bandeiraEl.textContent=b;
+
+  if(dist>1.5){
+    let vkm=(b==1?cfg.b1_km:cfg.b2_km)*min*0.5;
+    let vmin=(b==1?cfg.b1_min:cfg.b2_min)*min;
+    valor+=Math.max(vkm,vmin);
+  }
+
+  valorEl();
+},3000);
+
+function valorEl(){
+  valor.textContent=valor.toFixed(2);
+  distEl.textContent=dist.toFixed(2);
+  tempo.textContent=Math.floor((Date.now()-inicio)/60000);
+}
+
+function calc(a,b,c,d){
+  const R=6371;
+  let dLat=(c-a)*Math.PI/180;
+  let dLon=(d-b)*Math.PI/180;
+  let x=Math.sin(dLat/2)**2+
+  Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*
+  Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+// MAPA
+try{
+  map=L.map('map').setView([-21.13,-44.26],13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+}catch{}
+
+async function buscar(){
+  if(!navigator.onLine)return;
+  let q=destino.value;
+  let r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`);
+  let j=await r.json();
+  if(!j[0])return;
+  let lat=j[0].lat, lon=j[0].lon;
+  if(mark)mark.remove();
+  mark=L.marker([lat,lon]).addTo(map);
+  map.setView([lat,lon],14);
+}
+</script>
+
 </body>
 </html>
