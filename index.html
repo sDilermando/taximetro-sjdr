@@ -2,549 +2,250 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#121212">
-    <title>Taxímetro Gold V16</title>
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Taxímetro GPS</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* --- ESTILO BASE FIXO --- */
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        
-        html, body {
-            margin: 0; padding: 0; width: 100%; height: 100dvh; 
-            background-color: #121212; color: white;
-            font-family: 'Roboto', sans-serif;
-            overflow: hidden; position: fixed; 
-        }
+        :root { --neons: #00ff88; --dark: #111; --gray: #222; }
+        body { background: var(--dark); color: white; font-family: 'Roboto', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        #app-layout {
-            display: flex; flex-direction: column;
-            height: 100%; width: 100%;
-        }
+        /* HEADER CONFIG */
+        .config-bar { background: var(--gray); padding: 15px; display: flex; gap: 10px; border-bottom: 1px solid #333; }
+        .input-group { flex: 1; }
+        .input-group label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 5px; }
+        .input-conf { width: 100%; background: #000; border: 1px solid #444; color: var(--neons); padding: 8px; border-radius: 5px; font-weight: bold; text-align: center; font-size: 1rem; }
 
-        /* 1. TOPO */
-        header {
-            flex: 0 0 55px; 
-            background: #1e1e1e; border-bottom: 1px solid #333;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px;
-        }
-        .logo { font-weight: 900; font-size: 1.2rem; } .logo span { color: #00e676; }
-        .relogio { color: #29b6f6; font-weight: bold; font-size: 1rem; }
+        /* MOSTRADOR */
+        .display-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .label-total { font-size: 1rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
+        .value-total { font-size: 5rem; font-weight: 900; color: white; margin: 10px 0; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
+        .info-row { display: flex; gap: 30px; margin-top: 20px; }
+        .info-box { text-align: center; }
+        .info-val { font-size: 1.5rem; font-weight: 700; color: #ccc; }
+        .info-lbl { font-size: 0.7rem; color: #666; }
 
-        /* 2. CENTRO (MOSTRADOR) */
-        main {
-            flex: 1; 
-            display: flex; flex-direction: column; 
-            align-items: center; justify-content: center;
-            position: relative;
-            padding: 10px;
-            overflow-y: auto;
-        }
+        /* STATUS */
+        .status-badge { background: #333; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 20px; color: #888; }
+        .running { background: rgba(0, 255, 136, 0.2); color: var(--neons); border: 1px solid var(--neons); }
 
-        .valor-titulo { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        /* Aumentei ainda mais o valor para destacar */
-        .valor-grande { font-size: 5rem; font-weight: 900; color: #00e676; line-height: 1; margin: 5px 0 20px 0; text-shadow: 0 0 20px rgba(0,230,118,0.2); }
-        
-        /* Bandeiras */
-        .box-bandeira { display: flex; gap: 8px; margin-bottom: 15px; background: #222; padding: 4px; border-radius: 30px; }
-        .btn-band { background: transparent; border: none; color: #777; padding: 8px 20px; border-radius: 25px; font-weight: bold; font-size: 0.75rem; cursor: pointer; }
-        .btn-band.ativo { background: #00e676; color: #000; }
-        .btn-band.ativo2 { background: #ffea00; color: #000; }
-        .aviso-lock { font-size: 0.65rem; color: #ffea00; margin-bottom: 5px; display: none; }
+        /* CONTROLES */
+        .controls { padding: 20px; display: flex; gap: 10px; background: var(--gray); }
+        .btn { flex: 1; padding: 20px; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-start { background: var(--neons); color: black; }
+        .btn-stop { background: #ff3333; color: white; display: none; }
+        .btn-reset { background: #444; color: white; }
 
-        /* Cards Info (Reduzidos conforme pedido) */
-        .info-cards { display: flex; gap: 10px; width: 90%; justify-content: center; }
-        .card { 
-            background: #1e1e1e; padding: 8px; /* Menos padding */
-            border-radius: 8px; text-align: center; flex: 1; border: 1px solid #333; 
-        }
-        .card-val { font-size: 0.95rem; font-weight: bold; color: #fff; } /* Fonte menor */
-        .card-lbl { font-size: 0.5rem; color: #888; text-transform: uppercase; margin-top: 2px; }
-
-        /* 3. BOTÕES (FIXO) */
-        .area-botoes {
-            flex: 0 0 auto;
-            padding: 15px; background: #121212;
-            display: flex; align-items: center; gap: 10px;
-        }
-        
-        .btn-zao {
-            flex: 1; padding: 18px; border: none; border-radius: 10px;
-            font-size: 1rem; font-weight: 900; text-transform: uppercase; color: white;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: 0.1s;
-        }
-        .btn-zao:active { transform: scale(0.98); }
-        .verde { background: #00c853; box-shadow: 0 4px 0 #009624; }
-        .vermelho { background: #d50000; box-shadow: 0 4px 0 #9b0000; }
-
-        .btn-mini {
-            width: 60px; height: 60px; border-radius: 10px; border: none;
-            background: #37474f; color: #fff; font-size: 1.2rem;
-            cursor: pointer; display: none; align-items: center; justify-content: center;
-            box-shadow: 0 4px 0 #263238;
-        }
-        .btn-mini:active { transform: translateY(2px); box-shadow: none; }
-        .amarelo { background: #ffea00; color: #000; box-shadow: 0 4px 0 #fbc02d; }
-
-        /* 4. MENU INFERIOR */
-        footer {
-            flex: 0 0 auto; padding-bottom: env(safe-area-inset-bottom);
-            background: #1e1e1e; border-top: 1px solid #333;
-            display: grid; grid-template-columns: repeat(4, 1fr);
-        }
-        .menu-btn {
-            background: none; border: none; color: #888; padding: 12px 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 0.6rem; font-weight: bold; cursor: pointer;
-        }
-        .menu-btn svg { width: 22px; height: 22px; margin-bottom: 3px; fill: currentColor; }
-        .menu-btn:active { color: #00e676; background: #252525; }
-
-        /* MODAIS */
-        .modal-fundo {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 999;
-            display: none; justify-content: center; align-items: center;
-        }
-        .modal-janela {
-            width: 95%; max-width: 400px; background: #222;
-            border-radius: 15px; padding: 15px;
-            max-height: 85vh; overflow-y: auto; border: 1px solid #444;
-        }
-        .modal-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .modal-titulo { font-size: 1rem; font-weight: bold; color: #fff; }
-        .fechar { background: none; border: none; color: #fff; font-size: 1.5rem; padding: 0 10px; }
-
-        /* Configuração */
-        .switch-box { display: flex; align-items: center; justify-content: space-between; background: #111; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #444; }
-        .config-linha { display: flex; gap: 10px; margin-bottom: 10px; }
-        .config-item { flex: 1; }
-        .config-item label { display: block; font-size: 0.65rem; color: #aaa; margin-bottom: 5px; }
-        .config-item input { width: 100%; padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 5px; text-align: center; font-size: 0.9rem; }
-
-        /* MAPA E PESQUISA - CORREÇÃO DE LARGURA */
-        .mapa-container { width: 100%; height: 60vh; background: #333; border-radius: 10px; margin-bottom: 10px; position: relative; }
-        
-        /* Corrige a caixa de pesquisa para não vazar a tela */
-        .leaflet-control-geocoder { 
-            max-width: 65vw !important; /* Ocupa max 65% da tela */
-            min-width: 200px;
-            background: white; border-radius: 4px;
-        }
-        .leaflet-control-geocoder-form input { 
-            width: 100%; color: black; font-size: 14px; 
-        }
-        
-        /* Botão Microfone */
-        .mic-btn {
-            position: absolute; top: 10px; right: 10px; z-index: 999;
-            background: white; border: 2px solid #ccc; border-radius: 4px;
-            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-        }
-        .mic-btn:active { background: #eee; }
-
+        /* ANIMAÇÃO PULSO */
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .gps-dot { width: 10px; height: 10px; background: red; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .gps-active { background: var(--neons); animation: pulse 1s infinite; }
     </style>
 </head>
 <body>
 
-<div id="app-layout">
+    <div class="config-bar">
+        <div class="input-group">
+            <label>BANDEIRADA (R$)</label>
+            <input type="number" id="base-price" class="input-conf" value="5.00">
+        </div>
+        <div class="input-group">
+            <label>PREÇO/KM (R$)</label>
+            <input type="number" id="km-price" class="input-conf" value="2.50">
+        </div>
+    </div>
 
-    <header>
-        <div class="logo">TAXI<span>PRO</span></div>
-        <div class="relogio" id="relogio">00:00:00</div>
-    </header>
+    <div class="display-area">
+        <div id="gps-status" class="status-badge"><span class="gps-dot"></span> AGUARDANDO GPS</div>
+        
+        <div class="label-total">Valor a Pagar</div>
+        <div class="value-total">R$ <span id="display-money">0.00</span></div>
 
-    <main>
-        <div class="valor-titulo">TOTAL A PAGAR</div>
-        <div class="valor-grande" id="displayPreco">R$ 0,00</div>
-
-        <div style="text-align:center;">
-            <div class="aviso-lock" id="avisoAuto">🔒 AUTO ATIVO</div>
-            <div class="box-bandeira">
-                <button class="btn-band ativo" id="btnB1" onclick="mudarBandeira(1)">BAND 1</button>
-                <button class="btn-band" id="btnB2" onclick="mudarBandeira(2)">BAND 2</button>
+        <div class="info-row">
+            <div class="info-box">
+                <div class="info-val"><span id="display-dist">0.0</span> km</div>
+                <div class="info-lbl">DISTÂNCIA</div>
+            </div>
+            <div class="info-box">
+                <div class="info-val" id="display-time">00:00</div>
+                <div class="info-lbl">DURAÇÃO</div>
             </div>
         </div>
-
-        <div class="info-cards">
-            <div class="card">
-                <div class="card-val" id="displayKm">0.0</div>
-                <div class="card-lbl">KM (> 1.5)</div>
-            </div>
-            <div class="card">
-                <div class="card-val" id="displayTempo">00:00</div>
-                <div class="card-lbl">TEMPO</div>
-            </div>
-        </div>
-    </main>
-
-    <div class="area-botoes">
-        <button class="btn-mini" id="btnPausa" onclick="pausarCorrida()">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-        </button>
-        <button class="btn-zao verde" id="btnPrincipal" onclick="acaoPrincipal()">
-            INICIAR CORRIDA
-        </button>
     </div>
 
-    <footer>
-        <button class="menu-btn" onclick="abrirSimulador()">
-            <svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
-            Simular
-        </button>
-        <button class="menu-btn" onclick="abrirHistorico()">
-            <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-            Histórico
-        </button>
-        <button class="menu-btn" onclick="compartilhar()">
-            <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
-            App
-        </button>
-        <button class="menu-btn" onclick="abrirAjustes()">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg>
-            Ajustes
-        </button>
-    </footer>
-
-</div>
-
-<div id="modAjustes" class="modal-fundo">
-    <div class="modal-janela">
-        <div class="modal-topo"><span class="modal-titulo">Tarifas & Config</span><button class="fechar" onclick="fecharModal('modAjustes')">×</button></div>
-        
-        <div class="switch-box">
-            <label style="color:#fff; font-size:0.8rem;">Auto Bandeira (Horário)</label>
-            <input type="checkbox" id="check_auto">
-        </div>
-
-        <div class="config-linha">
-            <div class="config-item"><label>Band 1 (R$)</label><input type="number" id="inp_b1"></div>
-            <div class="config-item"><label>Km 1 (R$)</label><input type="number" id="inp_k1"></div>
-        </div>
-        <div class="config-item" style="margin-bottom:15px;"><label>Minuto Band 1 (R$)</label><input type="number" id="inp_m1"></div>
-
-        <hr style="border-color:#333; margin:10px 0;">
-
-        <div class="config-linha">
-            <div class="config-item"><label>Band 2 (R$)</label><input type="number" id="inp_b2"></div>
-            <div class="config-item"><label>Km 2 (R$)</label><input type="number" id="inp_k2"></div>
-        </div>
-        <div class="config-item" style="margin-bottom:15px;"><label>Minuto Band 2 (R$)</label><input type="number" id="inp_m2"></div>
-        
-        <hr style="border-color:#333; margin:10px 0;">
-        <div style="color:#ffea00; font-size:0.7rem; margin-bottom:5px; font-weight:bold;">HORÁRIO AUTO (Se ativo)</div>
-        <div class="config-linha">
-            <div class="config-item"><label>Início (Hora)</label><input type="number" id="inp_h1"></div>
-            <div class="config-item"><label>Fim (Hora)</label><input type="number" id="inp_h2"></div>
-        </div>
-        
-        <button class="btn-zao verde" onclick="salvarAjustes()" style="margin-top:10px; width:100%;">SALVAR</button>
+    <div class="controls">
+        <button class="btn btn-reset" onclick="resetRide()"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-start" id="btn-start" onclick="toggleRide()">INICIAR</button>
+        <button class="btn btn-stop" id="btn-stop" onclick="toggleRide()">PARAR</button>
     </div>
-</div>
 
-<div id="modSim" class="modal-fundo">
-    <div class="modal-janela">
-        <div class="modal-topo"><span class="modal-titulo">Simulador</span><button class="fechar" onclick="fecharModal('modSim')">×</button></div>
-        <div style="position:relative;">
-            <div id="mapaSim" class="mapa-container"></div>
-            <button class="mic-btn" onclick="iniciarVoz()" title="Falar Endereço">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="#333"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-            </button>
-        </div>
-        <div style="text-align:center; background:#111; padding:10px; border-radius:10px;">
-            <div style="font-size:0.7rem; color:#aaa;">ESTIMATIVA</div>
-            <div id="simValor" style="font-size:1.5rem; font-weight:bold; color:#00e676;">R$ 0,00</div>
-            <div id="simDist" style="color:#fff;">0 km | 0 min</div>
-        </div>
-    </div>
-</div>
-
-<div id="modHist" class="modal-fundo">
-    <div class="modal-janela">
-        <div class="modal-topo"><span class="modal-titulo">Histórico</span><button class="fechar" onclick="fecharModal('modHist')">×</button></div>
-        <div id="listaHist" style="margin-bottom:15px;"></div>
-        <button class="btn-zao vermelho" onclick="limparHist()" style="width:100%;">LIMPAR TUDO</button>
-    </div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-<script>
-    // FIREBASE
-    const fbCfg = {
-        apiKey: "AIzaSyBzD2q7VWFM1jGqj-787M3AZV0_I9uFZ_s",
-        authDomain: "vaga-especial-ff7d3.firebaseapp.com",
-        databaseURL: "https://vaga-especial-ff7d3-default-rtdb.firebaseio.com",
-        projectId: "vaga-especial-ff7d3",
-        storageBucket: "vaga-especial-ff7d3.firebasestorage.app",
-        messagingSenderId: "220203379880",
-        appId: "1:220203379880:web:3ed69498dd1a7c3049e69d"
-    };
-    if(!firebase.apps.length) firebase.initializeApp(fbCfg);
-    const db = firebase.database();
-
-    // VARS
-    let configs = JSON.parse(localStorage.getItem('taxi_cfg_16')) || { 
-        b1:6, k1:3.5, m1:0.5, 
-        b2:8, k2:4.5, m2:0.8,
-        h1:22, h2:6, auto:true 
-    };
-    let corrida = { on:false, pause:false, dist:0, tempo:0, valor:0, flag:1, manual:false };
-    let timer, watch, lastPos, mapSim, rotaCtrl, geocoderCtrl;
-
-    window.onload = () => {
-        setInterval(() => { document.getElementById('relogio').innerText = new Date().toLocaleTimeString(); }, 1000);
-        setInterval(checkFlagAuto, 60000);
-        checkFlagAuto();
-        updateTela();
-    };
-
-    // --- BANDEIRA ---
-    function checkFlagAuto() {
-        if(corrida.manual || !configs.auto) return;
-        const h = new Date().getHours();
-        let isB2 = (configs.h1 > configs.h2) ? (h >= configs.h1 || h < configs.h2) : (h >= configs.h1 && h < configs.h2);
-        aplicarFlag(isB2 ? 2 : 1, true);
-    }
-
-    function mudarBandeira(n) {
-        if(configs.auto && !corrida.manual && document.getElementById('avisoAuto').style.display === 'block') {
-            return Swal.fire('Automático Ativo', 'Desative nas configurações para mudar manual.', 'info');
-        }
-        corrida.manual = true;
-        aplicarFlag(n, false);
-    }
-
-    function aplicarFlag(n, auto) {
-        corrida.flag = n;
-        document.getElementById('btnB1').className = n===1 ? 'btn-band ativo' : 'btn-band';
-        document.getElementById('btnB2').className = n===2 ? 'btn-band ativo2' : 'btn-band';
+    <script>
+        let running = false;
+        let watchId = null;
+        let startTime = null;
+        let timerInterval = null;
         
-        const aviso = document.getElementById('avisoAuto');
-        aviso.style.display = (auto && configs.auto) ? 'block' : 'none';
-        
-        if(corrida.on) calcular();
-        else {
-            let base = n===1 ? configs.b1 : configs.b2;
-            document.getElementById('displayPreco').innerText = `R$ ${base.toFixed(2)}`;
-        }
-    }
+        let totalDist = 0;
+        let lastLat = null;
+        let lastLng = null;
+        let priceTotal = 0;
 
-    // --- CALCULO ---
-    function calcular() {
-        let base = corrida.flag===1 ? configs.b1 : configs.b2;
-        let kmP = corrida.flag===1 ? configs.k1 : configs.k2;
-        let minP = corrida.flag===1 ? configs.m1 : configs.m2;
-        
-        if(corrida.dist <= 1.5) {
-            corrida.valor = base;
-        } else {
-            let exc = corrida.dist - 1.5;
-            corrida.valor = base + (exc * kmP) + ((corrida.tempo/60) * minP);
-        }
-        updateTela();
-    }
+        // Configura GPS
+        navigator.geolocation.watchPosition((p) => {
+            const dot = document.querySelector('.gps-dot');
+            dot.classList.add('gps-active');
+            dot.style.background = '#00ff88';
+            document.getElementById('gps-status').innerHTML = '<span class="gps-dot gps-active"></span> GPS CONECTADO';
+        }, (err) => {
+            console.error(err);
+        }, { enableHighAccuracy: true });
 
-    function updateTela() {
-        document.getElementById('displayPreco').innerText = `R$ ${corrida.valor.toFixed(2)}`;
-        document.getElementById('displayKm').innerText = corrida.dist.toFixed(1);
-        let m = Math.floor(corrida.tempo/60).toString().padStart(2,'0');
-        let s = (corrida.tempo%60).toString().padStart(2,'0');
-        document.getElementById('displayTempo').innerText = `${m}:${s}`;
-    }
+        function toggleRide() {
+            if(!running) {
+                // INICIAR
+                const base = parseFloat(document.getElementById('base-price').value);
+                if(!base) return Swal.fire('Erro', 'Configure a bandeirada.', 'error');
 
-    // --- ACAO PRINCIPAL ---
-    function acaoPrincipal() {
-        if(!corrida.on) {
-            // INICIAR
-            corrida.on = true; corrida.pause = false; corrida.dist = 0; corrida.tempo = 0; corrida.manual = false;
-            checkFlagAuto();
-            
-            const btn = document.getElementById('btnPrincipal');
-            btn.innerText = "ENCERRAR CORRIDA";
-            btn.className = "btn-zao vermelho";
-            document.getElementById('btnPausa').style.display = 'flex';
-            
-            if(navigator.geolocation) {
-                watch = navigator.geolocation.watchPosition(p => {
-                    if(corrida.on && !corrida.pause) {
-                        if(lastPos) {
-                            let d = getD(lastPos.coords.latitude, lastPos.coords.longitude, p.coords.latitude, p.coords.longitude);
-                            if(d > 0.005) { corrida.dist += d; calcular(); }
-                        }
-                        lastPos = p;
-                    }
-                }, null, { enableHighAccuracy: true });
-            }
-            timer = setInterval(() => { if(!corrida.pause) { corrida.tempo++; calcular(); } }, 1000);
-
-        } else {
-            // ENCERRAR
-            clearInterval(timer); navigator.geolocation.clearWatch(watch);
-            corrida.on = false;
-            
-            const r = { data: new Date().toLocaleString(), val: corrida.valor.toFixed(2), dist: corrida.dist.toFixed(2), tempo: document.getElementById('displayTempo').innerText, flag: corrida.flag };
-            db.ref('taxi_rides').push(r);
-
-            Swal.fire({
-                title: 'Fim de Corrida',
-                html: `<h1 style="color:#00e676">R$ ${r.val}</h1><p>${r.dist}km | ${r.tempo}</p>`,
-                showCancelButton: true, confirmButtonText: 'Nova Corrida', cancelButtonText: 'Recibo'
-            }).then(res => {
-                if(res.dismiss === Swal.DismissReason.cancel) {
-                    const txt = `🚖 TÁXI\n💰 R$ ${r.val}\n🏁 ${r.dist}km\n⏱ ${r.tempo}`;
-                    if(navigator.share) navigator.share({text:txt});
-                }
-                const btn = document.getElementById('btnPrincipal');
-                btn.innerText = "INICIAR CORRIDA";
-                btn.className = "btn-zao verde";
-                document.getElementById('btnPausa').style.display = 'none';
-                document.getElementById('btnPausa').innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-                document.getElementById('btnPausa').className = "btn-mini";
+                running = true;
+                startTime = Date.now();
+                priceTotal = base;
                 
-                corrida.valor = 0; corrida.dist = 0; corrida.tempo = 0;
-                checkFlagAuto();
-            });
-        }
-    }
+                // Trava inputs
+                document.querySelectorAll('.input-conf').forEach(i => i.disabled = true);
+                
+                // UI
+                document.getElementById('btn-start').style.display = 'none';
+                document.getElementById('btn-stop').style.display = 'block';
+                document.getElementById('display-money').innerText = base.toFixed(2);
+                document.querySelector('.value-total').style.color = '#00ff88';
 
-    function pausarCorrida() {
-        corrida.pause = !corrida.pause;
-        const btn = document.getElementById('btnPausa');
-        if(corrida.pause) {
-            btn.innerHTML = '▶';
-            btn.className = "btn-mini amarelo";
-        } else {
-            btn.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-            btn.className = "btn-mini";
-        }
-    }
+                // Timer
+                timerInterval = setInterval(updateTime, 1000);
 
-    // --- MODAIS ---
-    function abrirAjustes() {
-        document.getElementById('check_auto').checked = configs.auto;
-        document.getElementById('inp_b1').value = configs.b1; document.getElementById('inp_k1').value = configs.k1; document.getElementById('inp_m1').value = configs.m1;
-        document.getElementById('inp_b2').value = configs.b2; document.getElementById('inp_k2').value = configs.k2; document.getElementById('inp_m2').value = configs.m2;
-        document.getElementById('inp_h1').value = configs.h1; document.getElementById('inp_h2').value = configs.h2;
-        abrirModal('modAjustes');
-    }
-    function salvarAjustes() {
-        configs = {
-            auto: document.getElementById('check_auto').checked,
-            b1: parseFloat(document.getElementById('inp_b1').value), k1: parseFloat(document.getElementById('inp_k1').value), m1: parseFloat(document.getElementById('inp_m1').value),
-            b2: parseFloat(document.getElementById('inp_b2').value), k2: parseFloat(document.getElementById('inp_k2').value), m2: parseFloat(document.getElementById('inp_m2').value),
-            h1: parseInt(document.getElementById('inp_h1').value), h2: parseInt(document.getElementById('inp_h2').value)
-        };
-        localStorage.setItem('taxi_cfg_16', JSON.stringify(configs));
-        fecharModal('modAjustes');
-        checkFlagAuto();
-        Swal.fire('Salvo!', '', 'success');
-    }
+                // GPS Tracking
+                if (navigator.geolocation) {
+                    watchId = navigator.geolocation.watchPosition(processPosition, null, {
+                        enableHighAccuracy: true,
+                        maximumAge: 1000,
+                        timeout: 5000
+                    });
+                }
 
-    function abrirSimulador() {
-        abrirModal('modSim');
-        setTimeout(() => {
-            if(!mapSim) {
-                mapSim = L.map('mapaSim').setView([-21, -44], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapSim);
-                // Inicializa o geocoder
-                geocoderCtrl = L.Control.geocoder({ defaultMarkGeocode: false, placeholder:'Destino...' })
-                .on('markgeocode', function(e) { rota(e.geocode.center); }).addTo(mapSim);
+            } else {
+                // PARAR
+                running = false;
+                clearInterval(timerInterval);
+                navigator.geolocation.clearWatch(watchId);
+                lastLat = null; lastLng = null;
+
+                // UI
+                document.getElementById('btn-start').style.display = 'block';
+                document.getElementById('btn-stop').style.display = 'none';
+                document.getElementById('btn-start').innerText = 'CONTINUAR';
+                document.querySelector('.value-total').style.color = 'white';
+                
+                // Finalizar
+                checkout();
             }
-            mapSim.invalidateSize();
-            navigator.geolocation.getCurrentPosition(p => {
-                const me = [p.coords.latitude, p.coords.longitude];
-                mapSim.setView(me, 14); mapSim.myPos = me;
-                L.marker(me).addTo(mapSim).bindPopup('Eu').openPopup();
-            });
-        }, 300);
-    }
+        }
 
-    // --- FUNÇÃO DE VOZ ---
-    function iniciarVoz() {
-        if (!('webkitSpeechRecognition' in window)) return alert("Seu navegador não suporta voz.");
-        
-        const rec = new webkitSpeechRecognition();
-        rec.lang = 'pt-BR';
-        rec.start();
+        function processPosition(position) {
+            if (!running) return;
 
-        rec.onresult = function(e) {
-            const fala = e.results[0][0].transcript;
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            // Ignora sinal ruim (>20m erro)
+            if (accuracy > 20) return;
+
+            if (lastLat != null) {
+                const km = getDistanceFromLatLonInKm(lastLat, lastLng, lat, lng);
+                
+                // Filtro de ruído (só conta se moveu > 5 metros)
+                if (km > 0.005) {
+                    totalDist += km;
+                    updateCost();
+                    lastLat = lat;
+                    lastLng = lng;
+                }
+            } else {
+                lastLat = lat;
+                lastLng = lng;
+            }
+        }
+
+        function updateCost() {
+            const kmPrice = parseFloat(document.getElementById('km-price').value);
+            const basePrice = parseFloat(document.getElementById('base-price').value);
+            
+            // Cálculo: Bandeirada + (Km * Preço/Km)
+            priceTotal = basePrice + (totalDist * kmPrice);
+            
+            document.getElementById('display-money').innerText = priceTotal.toFixed(2);
+            document.getElementById('display-dist').innerText = totalDist.toFixed(1);
+        }
+
+        function updateTime() {
+            const diff = Date.now() - startTime;
+            const sec = Math.floor((diff / 1000) % 60);
+            const min = Math.floor((diff / (1000 * 60)) % 60);
+            const hrs = Math.floor((diff / (1000 * 60 * 60)));
+            
+            document.getElementById('display-time').innerText = 
+                `${hrs > 0 ? hrs+':' : ''}${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        }
+
+        function resetRide() {
+            if(running) return;
+            totalDist = 0;
+            priceTotal = 0;
+            startTime = null;
+            lastLat = null; lastLng = null;
+            
+            document.getElementById('display-money').innerText = "0.00";
+            document.getElementById('display-dist').innerText = "0.0";
+            document.getElementById('display-time').innerText = "00:00";
+            document.getElementById('btn-start').innerText = "INICIAR";
+            document.querySelectorAll('.input-conf').forEach(i => i.disabled = false);
+        }
+
+        function checkout() {
             Swal.fire({
-                title: 'Buscando...',
-                text: fala,
-                timer: 1500, showConfirmButton: false
+                title: 'Corrida Finalizada',
+                html: `
+                    Total: <b>R$ ${priceTotal.toFixed(2)}</b><br>
+                    Distância: ${totalDist.toFixed(1)} km
+                `,
+                icon: 'success',
+                confirmButtonText: '<i class="fab fa-whatsapp"></i> Enviar Cobrança',
+                confirmButtonColor: '#25D366',
+                showCancelButton: true,
+                cancelButtonText: 'Fechar'
+            }).then((res) => {
+                if(res.isConfirmed) {
+                    const msg = `🚖 *RESUMO DA CORRIDA*%0A%0A💰 Valor: R$ ${priceTotal.toFixed(2)}%0A📏 Distância: ${totalDist.toFixed(1)} km%0A⏱️ Tempo: ${document.getElementById('display-time').innerText}`;
+                    window.open(`https://wa.me/?text=${msg}`, '_blank');
+                }
             });
-            // Tenta injetar no geocoder
-            const input = document.querySelector('.leaflet-control-geocoder-form input');
-            if(input) {
-                input.value = fala;
-                // Simula enter ou dispara busca (tentativa)
-                // Como é complexo disparar o evento interno do plugin, vamos alertar o usuário para confirmar
-                // Mas o plugin geralmente escuta eventos de teclado.
-                // Fallback: usar o geocoder manualmente
-                geocoderCtrl.options.geocoder.geocode(fala, function(results) {
-                    if (results && results.length > 0) {
-                        rota(results[0].center);
-                        mapSim.fitBounds(results[0].bbox);
-                    } else {
-                        alert("Endereço não encontrado.");
-                    }
-                });
-            }
-        };
-        rec.onerror = function() { alert("Erro ao ouvir."); };
-    }
+        }
 
-    function rota(dest) {
-        if(!mapSim.myPos) return;
-        if(rotaCtrl) mapSim.removeControl(rotaCtrl);
-        rotaCtrl = L.Routing.control({ waypoints: [L.latLng(mapSim.myPos), dest], createMarker: ()=>null, show:false }).on('routesfound', e => {
-            const d = e.routes[0].summary.totalDistance / 1000;
-            const t = e.routes[0].summary.totalTime / 60;
-            
-            let b = corrida.flag===1 ? configs.b1 : configs.b2;
-            let k = corrida.flag===1 ? configs.k1 : configs.k2;
-            let m = corrida.flag===1 ? configs.m1 : configs.m2;
-            
-            let v = b;
-            if(d > 1.5) v += (d-1.5)*k;
-            v += t * m;
-            
-            document.getElementById('simValor').innerText = `R$ ${v.toFixed(2)}`;
-            document.getElementById('simDist').innerText = `${d.toFixed(1)} km`;
-        }).addTo(mapSim);
-    }
+        // Haversine Formula (Cálculo Preciso de Distância)
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            var R = 6371; 
+            var dLat = deg2rad(lat2-lat1); 
+            var dLon = deg2rad(lon2-lon1); 
+            var a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            var d = R * c; 
+            return d;
+        }
 
-    function abrirHistorico() {
-        abrirModal('modHist');
-        db.ref('taxi_rides').limitToLast(10).once('value').then(s => {
-            let h = ''; let a = []; s.forEach(c => a.push(c.val()));
-            a.reverse().forEach(r => { h += `<div style="background:#333; padding:10px; margin-bottom:5px; border-radius:5px;"><div style="display:flex; justify-content:space-between; color:#fff"><b>R$ ${r.val}</b> <small>${r.data}</small></div><small style="color:#aaa">${r.dist}km | ${r.tempo}</small></div>`; });
-            document.getElementById('listaHist').innerHTML = h || 'Vazio';
-        });
-    }
-    function limparHist() { if(confirm('Limpar?')) { db.ref('taxi_rides').remove(); document.getElementById('listaHist').innerHTML=''; }}
-    function compartilhar() { if(navigator.share) navigator.share({title:'Taxi', url:window.location.href}); }
-    
-    function abrirModal(id) { document.getElementById(id).style.display='flex'; }
-    function fecharModal(id) { document.getElementById(id).style.display='none'; }
-    function getD(lat1, lon1, lat2, lon2) { const R=6371; const dLat=(lat2-lat1)*Math.PI/180; const dLon=(lon2-lon1)*Math.PI/180; const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2); return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); }
-
-</script>
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+    </script>
 </body>
 </html>
