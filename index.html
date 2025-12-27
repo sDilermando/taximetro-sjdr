@@ -60,10 +60,15 @@
             border-radius: 30px; padding: 30px; width: 85%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             margin-bottom: 30px; position: relative;
         }
-        .flag-tag {
-            position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #000;
-            padding: 4px 15px; border-radius: 20px; font-weight: 800; font-size: 0.7rem; letter-spacing: 1px; box-shadow: 0 0 15px var(--accent);
+        
+        .flag-btn {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%); 
+            background: var(--accent); color: #000; padding: 4px 15px;
+            border-radius: 20px; font-weight: 800; font-size: 0.7rem; letter-spacing: 1px; 
+            box-shadow: 0 0 15px var(--accent); border: none; cursor: pointer;
         }
+        .flag-btn:active { transform: translateX(-50%) scale(0.95); }
+
         .currency { font-size: 1.5rem; vertical-align: top; color: #aaa; }
         .price-big { font-size: 4.5rem; font-weight: 800; color: #fff; line-height: 1; text-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
         .mini-info { display: flex; justify-content: center; gap: 20px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
@@ -83,7 +88,7 @@
         .pause-btn.active { background: #ffaa00; color: #000; border-color: #ffaa00; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
 
-        /* TELA CONFIG (Grid) */
+        /* TELA CONFIG */
         #screen-config { padding: 20px; }
         .config-scroll { overflow-y: auto; padding-bottom: 20px; }
         .cfg-group { margin-bottom: 25px; }
@@ -98,6 +103,7 @@
             width: 100%; background: transparent; border: none; color: #fff; font-size: 1.3rem; font-weight: bold; text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;
         }
+        .auto-row { display: flex; justify-content: space-between; align-items: center; background: var(--glass); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
         .save-btn {
             width: 100%; padding: 15px; background: var(--accent); color: #000; border: none; border-radius: 50px;
             font-weight: 800; font-size: 1rem; margin-top: 10px; cursor: pointer;
@@ -108,12 +114,22 @@
         #map-wrap { width: 100%; height: 100%; }
         .search-float {
             position: absolute; top: 20px; left: 15px; right: 15px; z-index: 1000;
-            background: var(--glass-solid); border-radius: 12px; display: flex; padding: 5px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border);
+            background: #fff; border-radius: 12px; display: flex; padding: 5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .search-input { flex: 1; background: transparent; border: none; padding: 12px; color: #fff; outline: none; font-size: 1rem; }
-        .search-btn { width: 50px; background: var(--accent); color: #000; border: none; border-radius: 8px; font-size: 1.1rem; }
+        .search-input { flex: 1; background: transparent; border: none; padding: 12px; color: #333; outline: none; font-size: 1rem; }
+        .search-btn { width: 50px; background: var(--bg-light); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; }
         
+        .map-actions {
+            position: absolute; bottom: 85px; right: 20px; z-index: 900;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .round-btn {
+            width: 50px; height: 50px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3);
+            background: var(--bg-light); color: #fff; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-size: 1.2rem; cursor: pointer;
+        }
+
         .preview-card {
             position: absolute; bottom: 85px; left: 15px; right: 15px; z-index: 1000;
             background: var(--glass-solid); border-radius: 20px; padding: 20px;
@@ -131,11 +147,31 @@
         .btn-map-action { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.9rem; }
         .btn-google { background: #4285F4; color: #fff; }
         .btn-close { background: #333; color: #fff; }
-        .btn-back-home {
-            position: absolute; bottom: 85px; right: 20px; width: 50px; height: 50px; border-radius: 50%;
-            background: var(--bg-light); color: #fff; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 900; border: 1px solid var(--border);
+
+        /* --- SISTEMA SPLASH (AVISOS) --- */
+        .splash-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; align-items: center; justify-content: center;
         }
+        .splash-card {
+            background: rgba(20, 20, 50, 0.98); border: 1px solid var(--accent);
+            padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px;
+            box-shadow: 0 0 40px rgba(0,255,255,0.2); animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popUp { from {transform: scale(0.5); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+        
+        .splash-icon { font-size: 2.5rem; color: var(--accent); margin-bottom: 15px; }
+        .splash-title { color: #fff; font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .splash-msg { color: #ccc; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; white-space: pre-line; }
+        .splash-btns { display: flex; gap: 10px; justify-content: center; }
+        .splash-btn {
+            flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; text-transform: uppercase;
+        }
+        .sb-primary { background: var(--accent); color: #000; box-shadow: 0 5px 15px rgba(0,255,255,0.2); }
+        .sb-secondary { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #fff; }
+        .sb-danger { background: var(--danger); color: #fff; box-shadow: 0 5px 15px rgba(255,0,85,0.2); }
+
     </style>
 </head>
 <body>
@@ -148,7 +184,7 @@
     <div id="screen-home" class="screen active">
         <i class="fas fa-location-arrow" style="font-size:2rem; color:var(--accent); margin-bottom:20px; opacity:0.8;"></i>
         <div class="glass-panel">
-            <div class="flag-tag" id="flag-badge">BANDEIRA 1</div>
+            <button class="flag-btn" id="flag-btn" onclick="toggleFlagManual()">BANDEIRA 1</button>
             <span class="currency">R$</span>
             <div class="price-big" id="ui-price">0,00</div>
             <div class="mini-info">
@@ -169,10 +205,14 @@
             <input type="text" id="map-input" class="search-input" placeholder="Digite o endereço...">
             <button class="search-btn" onclick="searchAddr()"><i class="fas fa-search"></i></button>
         </div>
+        
         <div id="map-wrap"></div>
-        <div class="btn-back-home" onclick="nav('home', document.querySelectorAll('.nav-item')[0])">
-            <i class="fas fa-arrow-left"></i>
+        
+        <div class="map-actions">
+            <div class="round-btn" onclick="centerMapUser()"><i class="fas fa-crosshairs"></i></div>
+            <div class="round-btn" onclick="nav('home', document.querySelectorAll('.nav-item')[0])"><i class="fas fa-arrow-left"></i></div>
         </div>
+
         <div id="preview-card" class="preview-card">
             <div class="prev-title">DESTINO ENCONTRADO</div>
             <div class="prev-addr" id="prev-addr">...</div>
@@ -210,6 +250,10 @@
                     <div class="cfg-box"><span class="cfg-label-small">BANDEIRA 2</span><input type="number" id="cfg-min2" class="cfg-input"></div>
                 </div>
             </div>
+            <div class="auto-row">
+                <span>Mudança Automática (20h-06h)</span>
+                <input type="checkbox" id="cfg-auto" style="transform:scale(1.5);">
+            </div>
             <button class="save-btn" onclick="saveData()">SALVAR E VOLTAR</button>
         </div>
     </div>
@@ -220,9 +264,19 @@
         <button class="nav-item" onclick="nav('config', this)"><i class="fas fa-cog"></i></button>
     </div>
 
+    <div id="splash-modal" class="splash-overlay">
+        <div class="splash-card">
+            <div class="splash-icon"><i class="fas fa-bell"></i></div>
+            <div class="splash-title" id="splash-title">Aviso</div>
+            <div class="splash-msg" id="splash-msg">Mensagem aqui...</div>
+            <div class="splash-btns" id="splash-btns">
+                </div>
+        </div>
+    </div>
+
 <script>
     /* --- LOGICA CORE --- */
-    let config = { base1: 6.00, base2: 8.00, km1: 4.00, km2: 5.20, min1: 0.50, min2: 0.80 };
+    let config = { base1: 6.00, base2: 8.00, km1: 4.00, km2: 5.20, min1: 0.50, min2: 0.80, auto: true };
     let state = { running: false, paused: false, fare: 0, km: 0, sec: 0, flag: 1 };
     let timer = null, watchId = null, lastPos = null, map = null, searchMarker = null, destCoords = null;
 
@@ -235,9 +289,26 @@
     function clock() {
         const now = new Date();
         document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        const h = now.getHours();
-        state.flag = (h >= 20 || h < 6) ? 2 : 1;
-        document.getElementById('flag-badge').innerText = "BANDEIRA " + state.flag;
+        if(config.auto) {
+            const h = now.getHours();
+            state.flag = (h >= 20 || h < 6) ? 2 : 1;
+        }
+        updateFlagUI();
+    }
+
+    function toggleFlagManual() {
+        state.flag = state.flag === 1 ? 2 : 1;
+        config.auto = false; 
+        document.getElementById('cfg-auto').checked = false;
+        updateFlagUI();
+        if(state.running && state.km === 0 && state.sec === 0) {
+             state.fare = state.flag === 1 ? config.base1 : config.base2;
+             updateUI();
+        }
+    }
+
+    function updateFlagUI() {
+        document.getElementById('flag-btn').innerText = "BANDEIRA " + state.flag;
     }
 
     function nav(id, btn) {
@@ -251,9 +322,11 @@
     /* --- CORRIDA --- */
     function handleRide() {
         if(!state.running) {
-            if(!navigator.geolocation) { alert("Ative o GPS!"); return; }
+            if(!navigator.geolocation) { 
+                showSplash("GPS OFF", "Ative a localização do seu celular para iniciar.", [{txt:"OK", cls:"sb-primary", cb:closeSplash}]);
+                return; 
+            }
             state.running = true; state.paused = false;
-            // Inicia com valor da bandeirada apenas
             state.fare = state.flag === 1 ? config.base1 : config.base2;
             state.km = 0; state.sec = 0; lastPos = null;
 
@@ -264,19 +337,24 @@
             watchGPS();
             timer = setInterval(tick, 1000);
         } else {
-            if(confirm("Encerrar corrida?")) stopRide();
+            showSplash("FINALIZAR?", "Deseja encerrar a corrida agora?", [
+                {txt:"CANCELAR", cls:"sb-secondary", cb:closeSplash},
+                {txt:"ENCERRAR", cls:"sb-danger", cb:stopRide}
+            ]);
         }
         updateUI();
     }
 
     function stopRide() {
+        closeSplash();
         state.running = false;
         clearInterval(timer);
         navigator.geolocation.clearWatch(watchId);
         document.getElementById('btn-main').classList.remove('stop');
         document.getElementById('btn-pause').style.display = 'none';
         document.getElementById('pulse-ring').style.animation = 'pulse 2s infinite';
-        alert("Valor Final: R$ " + state.fare.toFixed(2));
+        
+        showSplash("SUCESSO", "Corrida Finalizada!\nValor: R$ " + state.fare.toFixed(2), [{txt:"OK", cls:"sb-primary", cb:closeSplash}]);
     }
 
     function togglePause() {
@@ -294,26 +372,18 @@
     }
 
     function calc() {
-        // Base Inicial
         let total = state.flag === 1 ? config.base1 : config.base2;
-        
-        // Preços atuais
         const pKm = state.flag === 1 ? config.km1 : config.km2;
         const pMin = state.flag === 1 ? config.min1 : config.min2;
 
         if (state.km > 1.1) {
-            // Se rodou mais que 1.1km: Cobra excedente de KM + Tempo TOTAL (ou proporcional)
-            // Aqui cobraremos o tempo proporcional corrido, pois saiu da franquia
             total += (state.km - 1.1) * pKm;
             total += (state.sec / 60) * pMin;
         } else {
-            // Se NÃO rodou 1.1km (Franquia)
-            // Só cobra tempo se ficar parado muito tempo (Ex: > 5 min / 300s)
             if (state.sec > 300) {
                 total += ((state.sec - 300) / 60) * pMin;
             }
         }
-        
         state.fare = total;
     }
 
@@ -344,14 +414,20 @@
         map = L.map('map-wrap', {zoomControl:false}).setView([-14.2, -51.9], 4);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
+            attribution: '© OpenStreetMap'
         }).addTo(map);
+        centerMapUser();
+    }
+
+    function centerMapUser() {
         if(navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(p=>{
-                map.setView([p.coords.latitude, p.coords.longitude], 15);
-                L.circle([p.coords.latitude, p.coords.longitude], {color: 'cyan', radius: 50}).addTo(map);
-                window.myLat = p.coords.latitude;
-                window.myLon = p.coords.longitude;
+                const lat = p.coords.latitude;
+                const lon = p.coords.longitude;
+                map.setView([lat, lon], 16);
+                if(window.userCircle) map.removeLayer(window.userCircle);
+                window.userCircle = L.circle([lat, lon], {color: '#0088ff', radius: 30}).addTo(map);
+                window.myLat = lat; window.myLon = lon;
             });
         }
     }
@@ -368,10 +444,7 @@
                 if(searchMarker) map.removeLayer(searchMarker);
                 searchMarker = L.marker([lat, lon]).addTo(map);
 
-                // Estimativa
                 const dist = getDist(window.myLat||-14, window.myLon||-51, lat, lon) * 1.3;
-                
-                // Calculo Estimado (Calculo Simplificado: Base + KM)
                 let est = (state.flag===1?config.base1:config.base2);
                 const pkm = (state.flag===1?config.km1:config.km2);
                 if(dist > 1.1) est += (dist - 1.1) * pkm;
@@ -380,7 +453,9 @@
                 document.getElementById('prev-addr').innerText = d[0].display_name.split(',')[0];
                 document.getElementById('prev-dist').innerText = dist.toFixed(1) + " km";
                 document.getElementById('prev-price').innerText = "R$ " + est.toFixed(2).replace('.', ',');
-            } else { alert("Não encontrado"); }
+            } else { 
+                showSplash("ERRO", "Endereço não encontrado.", [{txt:"OK", cls:"sb-secondary", cb:closeSplash}]);
+            }
         });
     }
     function closePreview() { document.getElementById('preview-card').style.display = 'none'; }
@@ -394,8 +469,14 @@
         config.km2 = parseFloat(document.getElementById('cfg-km2').value);
         config.min1 = parseFloat(document.getElementById('cfg-min1').value);
         config.min2 = parseFloat(document.getElementById('cfg-min2').value);
+        config.auto = document.getElementById('cfg-auto').checked;
         localStorage.setItem('neonPro_cfg', JSON.stringify(config));
-        nav('home', document.querySelectorAll('.nav-item')[0]);
+        
+        showSplash("SALVO", "Configurações atualizadas!", [{txt:"OK", cls:"sb-primary", cb:() => {
+            closeSplash();
+            nav('home', document.querySelectorAll('.nav-item')[0]);
+            clock();
+        }}]);
     }
 
     function loadData() {
@@ -407,6 +488,26 @@
         document.getElementById('cfg-km2').value = config.km2;
         document.getElementById('cfg-min1').value = config.min1;
         document.getElementById('cfg-min2').value = config.min2;
+        document.getElementById('cfg-auto').checked = config.auto;
+    }
+
+    /* --- SPLASH SYSTEM --- */
+    function showSplash(title, msg, buttons) {
+        document.getElementById('splash-title').innerText = title;
+        document.getElementById('splash-msg').innerText = msg;
+        const btnContainer = document.getElementById('splash-btns');
+        btnContainer.innerHTML = '';
+        buttons.forEach(b => {
+            const btn = document.createElement('button');
+            btn.className = 'splash-btn ' + b.cls;
+            btn.innerText = b.txt;
+            btn.onclick = b.cb;
+            btnContainer.appendChild(btn);
+        });
+        document.getElementById('splash-modal').style.display = 'flex';
+    }
+    function closeSplash() {
+        document.getElementById('splash-modal').style.display = 'none';
     }
 
     function getDist(lat1,lon1,lat2,lon2) {
