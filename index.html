@@ -18,7 +18,7 @@
             --accent: #00ffff;
             --danger: #ff0055;
             --glass: rgba(255, 255, 255, 0.1);
-            --glass-solid: rgba(20, 20, 40, 0.95);
+            --glass-solid: rgba(20, 20, 40, 0.98);
             --border: rgba(255, 255, 255, 0.15);
         }
 
@@ -36,24 +36,31 @@
         /* HEADER & NAV */
         .top-status {
             height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
-            font-size: 0.8rem; opacity: 0.7; position: absolute; top: 0; width: 100%; z-index: 10;
+            font-size: 0.8rem; opacity: 0.7; position: absolute; top: 0; width: 100%; z-index: 10; pointer-events: none; /* Deixa clicar no mapa se precisar */
         }
 
+        /* Barra de Navegação (Só aparece na Home) */
         .nav-bar {
-            height: 70px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            height: 70px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
             position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-around; align-items: center;
             border-top: 1px solid var(--border); z-index: 100;
+            transition: transform 0.3s ease;
         }
+        .nav-bar.hidden { transform: translateY(100%); } /* Esconde nas outras telas */
+        
         .nav-item { font-size: 1.5rem; color: #666; background: none; border: none; transition: 0.3s; }
         .nav-item.active { color: var(--accent); transform: translateY(-5px); text-shadow: 0 0 10px var(--accent); }
 
         /* TELAS */
-        .screen { display: none !important; width: 100%; height: 100%; flex-direction: column; padding-top: 50px; padding-bottom: 80px; animation: fadeEffect 0.3s ease; }
+        .screen { display: none !important; width: 100%; height: 100%; flex-direction: column; animation: fadeEffect 0.3s ease; }
         .screen.active { display: flex !important; }
-        @keyframes fadeEffect { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeEffect { from { opacity: 0; } to { opacity: 1; } }
 
-        /* TELA INICIAL (NEON) */
-        #screen-home { align-items: center; justify-content: center; }
+        /* --- TELA INICIAL --- */
+        #screen-home { 
+            align-items: center; justify-content: center; 
+            padding-top: 50px; padding-bottom: 70px; /* Espaço para Header e Nav */
+        }
 
         .glass-panel {
             background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid var(--border);
@@ -88,9 +95,13 @@
         .pause-btn.active { background: #ffaa00; color: #000; border-color: #ffaa00; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
 
-        /* TELA CONFIG */
-        #screen-config { padding: 20px; }
-        .config-scroll { overflow-y: auto; padding-bottom: 20px; }
+        /* --- TELA CONFIG --- */
+        #screen-config { 
+            padding: 20px; 
+            padding-top: 60px; /* Header */
+            background: rgba(0,0,0,0.8); /* Fundo mais escuro para leitura */
+        }
+        .config-scroll { overflow-y: auto; height: 100%; padding-bottom: 40px; }
         .cfg-group { margin-bottom: 25px; }
         .cfg-title { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
         .cfg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -104,24 +115,34 @@
             border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;
         }
         .auto-row { display: flex; justify-content: space-between; align-items: center; background: var(--glass); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        
+        /* Botão Salvar (Visível e Grande) */
         .save-btn {
             width: 100%; padding: 15px; background: var(--accent); color: #000; border: none; border-radius: 50px;
-            font-weight: 800; font-size: 1rem; margin-top: 10px; cursor: pointer;
+            font-weight: 800; font-size: 1rem; margin-top: 20px; cursor: pointer; margin-bottom: 20px;
         }
 
-        /* TELA MAPA */
-        #screen-map { padding: 0; padding-bottom: 70px; position: relative; }
+        /* --- TELA MAPA --- */
+        #screen-map { position: relative; width: 100%; height: 100%; }
         #map-wrap { width: 100%; height: 100%; }
+        
+        /* Pesquisa Ajustada para não estourar a tela */
         .search-float {
             position: absolute; top: 20px; left: 15px; right: 15px; z-index: 1000;
             background: #fff; border-radius: 12px; display: flex; padding: 5px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 100%; /* Garante que não ultrapassa */
         }
-        .search-input { flex: 1; background: transparent; border: none; padding: 12px; color: #333; outline: none; font-size: 1rem; }
-        .search-btn { width: 50px; background: var(--bg-light); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; }
+        .search-input { 
+            flex: 1; background: transparent; border: none; padding: 12px; color: #333; outline: none; font-size: 1rem; 
+            min-width: 0; /* Impede que empurre o botão pra fora */
+        }
+        .search-btn { 
+            width: 50px; min-width: 50px; background: var(--bg-light); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; 
+        }
         
         .map-actions {
-            position: absolute; bottom: 85px; right: 20px; z-index: 900;
+            position: absolute; bottom: 30px; right: 20px; z-index: 900;
             display: flex; flex-direction: column; gap: 15px;
         }
         .round-btn {
@@ -131,24 +152,23 @@
         }
 
         .preview-card {
-            position: absolute; bottom: 85px; left: 15px; right: 15px; z-index: 1000;
-            background: var(--glass-solid); border-radius: 20px; padding: 20px;
+            position: absolute; bottom: 30px; left: 15px; right: 80px; /* Espaço para os botões redondos */
+            z-index: 1000; background: var(--glass-solid); border-radius: 20px; padding: 15px;
             border: 1px solid var(--accent); box-shadow: 0 0 30px rgba(0,0,0,0.8);
             display: none; animation: slideUp 0.3s ease;
         }
         @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        .prev-title { color: var(--accent); font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
-        .prev-addr { font-size: 0.9rem; color: #fff; margin-bottom: 15px; line-height: 1.4; }
-        .prev-stats { display: flex; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; }
-        .prev-val { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
-        .prev-dist { font-size: 1rem; color: #ccc; align-self: center; }
-        .btn-row { display: flex; gap: 10px; }
-        .btn-map-action { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.9rem; }
+        .prev-title { color: var(--accent); font-size: 0.7rem; font-weight: bold; margin-bottom: 5px; }
+        .prev-addr { font-size: 0.8rem; color: #fff; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .prev-val { font-size: 1.4rem; font-weight: bold; color: var(--accent); display: block; margin-bottom: 10px; }
+        
+        .btn-row { display: flex; gap: 5px; }
+        .btn-map-action { flex: 1; padding: 8px; border-radius: 8px; border: none; font-weight: bold; font-size: 0.8rem; }
         .btn-google { background: #4285F4; color: #fff; }
         .btn-close { background: #333; color: #fff; }
 
-        /* --- SISTEMA SPLASH (AVISOS) --- */
+        /* --- SPLASH SYSTEM --- */
         .splash-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
@@ -216,13 +236,11 @@
         <div id="preview-card" class="preview-card">
             <div class="prev-title">DESTINO ENCONTRADO</div>
             <div class="prev-addr" id="prev-addr">...</div>
-            <div class="prev-stats">
-                <span class="prev-dist" id="prev-dist">0 km</span>
-                <span class="prev-val" id="prev-price">R$ 0,00</span>
-            </div>
+            <span class="prev-val" id="prev-price">R$ 0,00</span>
+            <div style="font-size:0.8rem; color:#ccc; margin-bottom:10px;" id="prev-dist">0 km</div>
             <div class="btn-row">
                 <button class="btn-map-action btn-close" onclick="closePreview()">Fechar</button>
-                <button class="btn-map-action btn-google" onclick="openGoogle()">Google Maps</button>
+                <button class="btn-map-action btn-google" onclick="openGoogle()">Maps</button>
             </div>
         </div>
     </div>
@@ -258,7 +276,7 @@
         </div>
     </div>
 
-    <div class="nav-bar">
+    <div class="nav-bar" id="nav-bar">
         <button class="nav-item active" onclick="nav('home', this)"><i class="fas fa-home"></i></button>
         <button class="nav-item" onclick="nav('map', this)"><i class="fas fa-map-marked-alt"></i></button>
         <button class="nav-item" onclick="nav('config', this)"><i class="fas fa-cog"></i></button>
@@ -269,8 +287,7 @@
             <div class="splash-icon"><i class="fas fa-bell"></i></div>
             <div class="splash-title" id="splash-title">Aviso</div>
             <div class="splash-msg" id="splash-msg">Mensagem aqui...</div>
-            <div class="splash-btns" id="splash-btns">
-                </div>
+            <div class="splash-btns" id="splash-btns"></div>
         </div>
     </div>
 
@@ -278,7 +295,7 @@
     /* --- LOGICA CORE --- */
     let config = { base1: 6.00, base2: 8.00, km1: 4.00, km2: 5.20, min1: 0.50, min2: 0.80, auto: true };
     let state = { running: false, paused: false, fare: 0, km: 0, sec: 0, flag: 1 };
-    let timer = null, watchId = null, lastPos = null, map = null, searchMarker = null, destCoords = null;
+    let timer = null, watchId = null, lastPos = null, map = null, searchMarker = null, destCoords = null, routeLine = null;
 
     window.onload = () => {
         loadData();
@@ -315,7 +332,16 @@
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.getElementById('screen-'+id).classList.add('active');
-        btn.classList.add('active');
+        if(btn) btn.classList.add('active');
+
+        // Mostra/Esconde barra de navegação
+        const navbar = document.getElementById('nav-bar');
+        if(id === 'home') {
+            navbar.classList.remove('hidden');
+        } else {
+            navbar.classList.add('hidden');
+        }
+
         if(id === 'map' && map) setTimeout(()=>map.invalidateSize(), 300);
     }
 
@@ -440,9 +466,18 @@
             if(d[0]) {
                 const lat = d[0].lat, lon = d[0].lon;
                 destCoords = {lat, lon};
-                map.setView([lat, lon], 15);
+                
                 if(searchMarker) map.removeLayer(searchMarker);
                 searchMarker = L.marker([lat, lon]).addTo(map);
+                
+                // Desenha linha de rota (Visual)
+                if(routeLine) map.removeLayer(routeLine);
+                if(window.myLat && window.myLon) {
+                    routeLine = L.polyline([[window.myLat, window.myLon], [lat, lon]], {color: 'cyan', dashArray: '5, 10'}).addTo(map);
+                    map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
+                } else {
+                    map.setView([lat, lon], 15);
+                }
 
                 const dist = getDist(window.myLat||-14, window.myLon||-51, lat, lon) * 1.3;
                 let est = (state.flag===1?config.base1:config.base2);
@@ -458,7 +493,11 @@
             }
         });
     }
-    function closePreview() { document.getElementById('preview-card').style.display = 'none'; }
+    function closePreview() { 
+        document.getElementById('preview-card').style.display = 'none'; 
+        if(routeLine) map.removeLayer(routeLine);
+        if(searchMarker) map.removeLayer(searchMarker);
+    }
     function openGoogle() { if(destCoords) window.open(`https://www.google.com/maps/dir/?api=1&destination=${destCoords.lat},${destCoords.lon}`, '_blank'); }
 
     /* --- STORAGE --- */
